@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		A85E64B91EBF182E004193C9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A85E64B81EBF182E004193C9 /* main.cpp */; };
+		A8B9681D1EC8C1DF00244620 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */; };
+		A8B9681F1EC8C22500244620 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B9681E1EC8C22500244620 /* AudioToolbox.framework */; };
+		A8B968211EC8C22E00244620 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B968201EC8C22E00244620 /* CoreAudio.framework */; };
+		A8B968231EC8C2BA00244620 /* libportaudio.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B968221EC8C2BA00244620 /* libportaudio.a */; };
+		A8B968251EC8C51E00244620 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B968241EC8C51E00244620 /* Carbon.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +30,12 @@
 /* Begin PBXFileReference section */
 		A85E64B51EBF182E004193C9 /* Audio1 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Audio1; sourceTree = BUILT_PRODUCTS_DIR; };
 		A85E64B81EBF182E004193C9 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		A8B9681A1EC8C10E00244620 /* portaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = ../../../Downloads/portaudio/include/portaudio.h; sourceTree = "<group>"; };
+		A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		A8B9681E1EC8C22500244620 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		A8B968201EC8C22E00244620 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		A8B968221EC8C2BA00244620 /* libportaudio.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libportaudio.a; sourceTree = "<group>"; };
+		A8B968241EC8C51E00244620 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +43,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A8B968251EC8C51E00244620 /* Carbon.framework in Frameworks */,
+				A8B968211EC8C22E00244620 /* CoreAudio.framework in Frameworks */,
+				A8B9681F1EC8C22500244620 /* AudioToolbox.framework in Frameworks */,
+				A8B9681D1EC8C1DF00244620 /* AudioUnit.framework in Frameworks */,
+				A8B968231EC8C2BA00244620 /* libportaudio.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,8 +57,11 @@
 		A85E64AC1EBF182E004193C9 = {
 			isa = PBXGroup;
 			children = (
+				A8B968221EC8C2BA00244620 /* libportaudio.a */,
+				A8B9681A1EC8C10E00244620 /* portaudio.h */,
 				A85E64B71EBF182E004193C9 /* Audio1 */,
 				A85E64B61EBF182E004193C9 /* Products */,
+				A8B9681B1EC8C1DF00244620 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -60,6 +79,17 @@
 				A85E64B81EBF182E004193C9 /* main.cpp */,
 			);
 			path = Audio1;
+			sourceTree = "<group>";
+		};
+		A8B9681B1EC8C1DF00244620 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A8B968241EC8C51E00244620 /* Carbon.framework */,
+				A8B968201EC8C22E00244620 /* CoreAudio.framework */,
+				A8B9681E1EC8C22500244620 /* AudioToolbox.framework */,
+				A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -218,6 +248,10 @@
 		A85E64BD1EBF182E004193C9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -225,6 +259,10 @@
 		A85E64BE1EBF182E004193C9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -248,6 +286,7 @@
 				A85E64BE1EBF182E004193C9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
