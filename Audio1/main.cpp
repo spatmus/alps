@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include "portaudio.h"
+#include "sndfile.h"
 
 #define SAMPLE_RATE 96000
 
@@ -27,31 +28,30 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
 struct SoundData {
     long sz;
     long ptr;
-    char *dt;
-    int  nch;
+    float *dt;
+    SF_INFO sfInfo;
 };
 
-SoundData sd;
+SoundData sd = {0, 0, 0};
 
 bool loadWave(const char *fname)
 {
+    delete [] sd.dt;
     memset(&sd, 0, sizeof(sd));
-    FILE *f = fopen(fname, "wb");
-    if (!f)
-    {
-        std::cout << "Cannot open file " << fname << std::endl;
+    SNDFILE* f = sf_open(fname,SFM_READ,&sd.sfInfo);
+    if (!f) {
+        std::cout << "sfReadFile(): couldn't read \"" << fname << "\"" << std::endl;
         return false;
     }
     
-    fseek(f, 0, SEEK_END);
-    sd.sz = ftell(f);
-    sd.dt = new char[sd.sz];
-    fseek(f, 0, SEEK_SET);
-    fread(sd.dt, sd.sz, 1, f);
-    fclose(f);
+    sd.dt = new float [sd.sz = sd.sfInfo.frames * sd.sfInfo.channels];
     
-    // check the format
-    
+    sf_count_t samples_read = sf_read_float(f, sd.dt, sd.sz);
+    if (samples_read < (int)sd.sz) {
+        std::cout << "sfReadFile(): read " << samples_read << " float samples, expected "
+        << sd.sz << " from \"" << fname << "\"" << std::endl;
+    }
+    sf_close(f);
     return true;
 }
 
@@ -85,11 +85,14 @@ int main(int argc, const char * argv[]) {
             return 1;
         }
         delete [] sd.dt;
+        sd.dt = 0;
+        sd.sz = 0;
+        
+        err = Pa_Terminate();
+        if( err != paNoError )
+            printf(  "PortAudio error: %s\n", Pa_GetErrorText( err ) );
     }
     
-    PaError err = Pa_Terminate();
-    if( err != paNoError )
-        printf(  "PortAudio error: %s\n", Pa_GetErrorText( err ) );
     return 0;
 }
 

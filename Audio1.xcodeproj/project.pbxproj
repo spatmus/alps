@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A84C3D781ED23FFC00E38A5B /* libsndfile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A84C3D771ED23FFC00E38A5B /* libsndfile.a */; };
 		A85E64B91EBF182E004193C9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A85E64B81EBF182E004193C9 /* main.cpp */; };
 		A8B9681D1EC8C1DF00244620 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */; };
 		A8B9681F1EC8C22500244620 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B9681E1EC8C22500244620 /* AudioToolbox.framework */; };
@@ -28,9 +29,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A84C3D751ED237D600E38A5B /* portaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = ../../portaudio.h; sourceTree = "<group>"; };
+		A84C3D771ED23FFC00E38A5B /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsndfile.a; sourceTree = "<group>"; };
+		A84C3D791ED2400900E38A5B /* sndfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sndfile.h; sourceTree = "<group>"; };
 		A85E64B51EBF182E004193C9 /* Audio1 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Audio1; sourceTree = BUILT_PRODUCTS_DIR; };
 		A85E64B81EBF182E004193C9 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		A8B9681A1EC8C10E00244620 /* portaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = ../../../Downloads/portaudio/include/portaudio.h; sourceTree = "<group>"; };
 		A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		A8B9681E1EC8C22500244620 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		A8B968201EC8C22E00244620 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -46,6 +49,7 @@
 				A8B968251EC8C51E00244620 /* Carbon.framework in Frameworks */,
 				A8B968211EC8C22E00244620 /* CoreAudio.framework in Frameworks */,
 				A8B9681F1EC8C22500244620 /* AudioToolbox.framework in Frameworks */,
+				A84C3D781ED23FFC00E38A5B /* libsndfile.a in Frameworks */,
 				A8B9681D1EC8C1DF00244620 /* AudioUnit.framework in Frameworks */,
 				A8B968231EC8C2BA00244620 /* libportaudio.a in Frameworks */,
 			);
@@ -57,8 +61,10 @@
 		A85E64AC1EBF182E004193C9 = {
 			isa = PBXGroup;
 			children = (
+				A84C3D791ED2400900E38A5B /* sndfile.h */,
+				A84C3D771ED23FFC00E38A5B /* libsndfile.a */,
+				A84C3D751ED237D600E38A5B /* portaudio.h */,
 				A8B968221EC8C2BA00244620 /* libportaudio.a */,
-				A8B9681A1EC8C10E00244620 /* portaudio.h */,
 				A85E64B71EBF182E004193C9 /* Audio1 */,
 				A85E64B61EBF182E004193C9 /* Products */,
 				A8B9681B1EC8C1DF00244620 /* Frameworks */,
