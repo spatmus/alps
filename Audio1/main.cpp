@@ -10,10 +10,23 @@
 #include "portaudio.h"
 #include "sndfile.h"
 
+#define PA_SAMPLE_TYPE  paFloat32
+typedef float SAMPLE;
+
 #define SAMPLE_RATE 96000
+using namespace std;
+
+struct SoundData {
+    long        sz;
+    long        ptr;
+    SAMPLE      *dt;
+    SF_INFO     sfInfo;
+};
+
+SoundData sd = {0, 0, 0};
 
 /* This routine will be called by the PortAudio engine when audio is needed.
- It may called at interrupt level on some machines so don't do anything
+ It may be called at interrupt level on some machines so don't do anything
  that could mess up the system like calling malloc() or free().
  */
 static int patestCallback( const void *inputBuffer, void *outputBuffer,
@@ -22,34 +35,35 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
                           PaStreamCallbackFlags statusFlags,
                           void *userData )
 {
+    SoundData &d = *((SoundData*)userData);
+    long p = d.ptr;
+    long numsamples = framesPerBuffer * d.sfInfo.channels;
+    long sz = sizeof(SAMPLE) * numsamples;
+    memcpy(outputBuffer, d.dt + p, sz);
+    d.ptr += sz;
+    // TODO
     return 0;
 }
-
-struct SoundData {
-    long sz;
-    long ptr;
-    float *dt;
-    SF_INFO sfInfo;
-};
-
-SoundData sd = {0, 0, 0};
 
 bool loadWave(const char *fname)
 {
     delete [] sd.dt;
     memset(&sd, 0, sizeof(sd));
-    SNDFILE* f = sf_open(fname,SFM_READ,&sd.sfInfo);
+    SNDFILE* f = sf_open(fname, SFM_READ, &sd.sfInfo);
     if (!f) {
-        std::cout << "sfReadFile(): couldn't read \"" << fname << "\"" << std::endl;
+        cout << "sfReadFile(): couldn't read \"" << fname << "\"" << endl;
         return false;
     }
     
-    sd.dt = new float [sd.sz = sd.sfInfo.frames * sd.sfInfo.channels];
+    sd.dt = new SAMPLE [sd.sz = sd.sfInfo.frames * sd.sfInfo.channels];
     
     sf_count_t samples_read = sf_read_float(f, sd.dt, sd.sz);
     if (samples_read < (int)sd.sz) {
-        std::cout << "sfReadFile(): read " << samples_read << " float samples, expected "
-        << sd.sz << " from \"" << fname << "\"" << std::endl;
+        cout << "sfReadFile(): read " << samples_read << " float samples, expected "
+        << sd.sz << " from \"" << fname << "\"" << endl;
+    }
+    if (sd.sfInfo.samplerate != SAMPLE_RATE) {
+        cout << "Sampling frequency " << sd.sfInfo.samplerate << " instead of " << SAMPLE_RATE << endl;
     }
     sf_close(f);
     return true;
@@ -61,7 +75,7 @@ void compute();
 void report();
 
 int main(int argc, const char * argv[]) {
-    const char *fname = "noise.wav";
+    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/noise.wav";
     if (argc > 1)
     {
         fname = argv[1];
@@ -104,7 +118,7 @@ int selectFromList(int numDevices, bool inp)
         int num = inp ? deviceInfo->maxInputChannels : deviceInfo->maxOutputChannels;
         if (num) {
             cnt++;
-            std::cout << cnt << " " << deviceInfo->name << std::endl;
+            cout << cnt << " " << deviceInfo->name << endl;
         }
     }
     switch (cnt) {
@@ -112,14 +126,14 @@ int selectFromList(int numDevices, bool inp)
             return 0;
             
         case 1:
-            std::cout << " - selected " << std::endl;
+            cout << " - selected " << endl;
             return 1;
             
         default:
             while (1) {
                 int val;
-                std::cout << (inp ? "Input" : "Output") << " device [1.." << cnt << "]: ";
-                std::cin >> val;
+                cout << (inp ? "Input" : "Output") << " device [1.." << cnt << "]: ";
+                cin >> val;
                 if (val > 0 && val <= cnt)
                 {
                     return val;
@@ -157,21 +171,31 @@ bool selectDevices(int *inDev, int *outDev)
 void makeNoise(int inDev, int outDev)
 {
     PaStream *stream;
+    PaStreamParameters inPars;
+    inPars.device = inDev;
+    inPars.channelCount = sd.sfInfo.channels;
+    inPars.sampleFormat = PA_SAMPLE_TYPE;
+    inPars.hostApiSpecificStreamInfo = NULL;
+    inPars.suggestedLatency = 0.1;
+    
+    PaStreamParameters outPars = inPars;
+    outPars.device = outDev;
+    
     /* Open an audio I/O stream. */
-    PaError err = Pa_OpenDefaultStream( &stream,
-                                       2,          /* no input channels */
-                                       2,          /* stereo output */
-                                       paFloat32,  /* 32 bit floating point output */
-                                       SAMPLE_RATE,
-                                       256,        /* frames per buffer, i.e. the number
-                                                    of sample frames that PortAudio will
-                                                    request from the callback. Many apps
-                                                    may want to use
-                                                    paFramesPerBufferUnspecified, which
-                                                    tells PortAudio to pick the best,
-                                                    possibly changing, buffer size.*/
-                                       patestCallback, /* this is your callback function */
-                                       &sd ); /*This is a pointer that will be passed to
+    PaError err = Pa_OpenStream( &stream,
+                                 &inPars,          /* no input channels */
+                                 &outPars,          /* stereo output */
+                                 PA_SAMPLE_TYPE,  /* 32 bit floating point output */
+                                 SAMPLE_RATE,
+                                 256,        /* frames per buffer, i.e. the number
+                                                of sample frames that PortAudio will
+                                                request from the callback. Many apps
+                                                may want to use
+                                                paFramesPerBufferUnspecified, which
+                                                tells PortAudio to pick the best,
+                                                possibly changing, buffer size.*/
+                                 patestCallback, /* this is your callback function */
+                                 &sd ); /*This is a pointer that will be passed to
                                                your callback*/
     if( err != paNoError )
     {
