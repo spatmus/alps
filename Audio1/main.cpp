@@ -113,10 +113,13 @@ int main(int argc, const char * argv[]) {
 int selectFromList(int numDevices, bool inp)
 {
     int cnt = 0;
+    const int MAX_DEV = 20;
+    int idxs[MAX_DEV];
     for(int i=0; i<numDevices; i++ ) {
         const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo( i );
         int num = inp ? deviceInfo->maxInputChannels : deviceInfo->maxOutputChannels;
         if (num) {
+            idxs[cnt] = i;
             cnt++;
             cout << cnt << " " << deviceInfo->name << endl;
         }
@@ -126,8 +129,8 @@ int selectFromList(int numDevices, bool inp)
             return 0;
             
         case 1:
-            cout << " - selected " << endl;
-            return 1;
+            cout << " --- selected: " << Pa_GetDeviceInfo( idxs[0] )->name << endl;
+            return idxs[0];
             
         default:
             while (1) {
@@ -136,7 +139,7 @@ int selectFromList(int numDevices, bool inp)
                 cin >> val;
                 if (val > 0 && val <= cnt)
                 {
-                    return val;
+                    return idxs[val];
                 }
             }
             break;
