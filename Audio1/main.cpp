@@ -185,7 +185,6 @@ void makeNoise(int inDev, int outDev)
     PaError err = Pa_OpenStream( &stream,
                                  &inPars,          /* no input channels */
                                  &outPars,          /* stereo output */
-                                 PA_SAMPLE_TYPE,  /* 32 bit floating point output */
                                  SAMPLE_RATE,
                                  256,        /* frames per buffer, i.e. the number
                                                 of sample frames that PortAudio will
@@ -194,8 +193,9 @@ void makeNoise(int inDev, int outDev)
                                                 paFramesPerBufferUnspecified, which
                                                 tells PortAudio to pick the best,
                                                 possibly changing, buffer size.*/
+                                 paNoFlag,
                                  patestCallback, /* this is your callback function */
-                                 &sd ); /*This is a pointer that will be passed to
+				 &sd ); /*This is a pointer that will be passed to
                                                your callback*/
     if( err != paNoError )
     {
