@@ -7,6 +7,7 @@
 //
 
 #include <iostream>
+#include <vector>
 #include "portaudio.h"
 #include "sndfile.h"
 
@@ -19,11 +20,12 @@ using namespace std;
 struct SoundData {
     long        sz;
     long        ptr;
-    SAMPLE      *dt;
+    SAMPLE      *ping;
+    SAMPLE      *pong;
     SF_INFO     sfInfo;
 };
 
-SoundData sd = {0, 0, 0};
+SoundData sd = {0, 0, NULL, NULL};
 
 /* This routine will be called by the PortAudio engine when audio is needed.
  It may be called at interrupt level on some machines so don't do anything
@@ -39,29 +41,49 @@ static int patestCallback( const void *inputBuffer, void *outputBuffer,
     long p = d.ptr;
     long numsamples = framesPerBuffer * d.sfInfo.channels;
     long sz = sizeof(SAMPLE) * numsamples;
-    memcpy(outputBuffer, d.dt + p, sz);
-    d.ptr += sz;
+    memcpy(outputBuffer, d.ping + p, sz);
+    memcpy(d.pong + p, inputBuffer, sz);
+    d.ptr += numsamples;
     // TODO
-    return 0;
+    return d.ptr * sizeof(SAMPLE) > d.sz ? paComplete : paContinue;
+}
+
+void saveWave(const char *fname)
+{
+    SNDFILE* f = sf_open(fname, SFM_WRITE, &sd.sfInfo);
+    if (!f) {
+        cout << "sfWriteFile(): couldn't open \"" << fname << "\"" << endl;
+    } else {
+        sf_count_t samples_written = sf_write_float(f, sd.pong, sd.sz);
+        if (samples_written < (int)sd.sz) {
+            cout << "saveWave(): written " << samples_written << " float samples, expected "
+            << sd.sz << " to \"" << fname << "\"" << endl;
+        }
+        sf_close(f);
+    }
 }
 
 bool loadWave(const char *fname)
 {
-    delete [] sd.dt;
+    delete [] sd.ping;
+    delete [] sd.pong;
     memset(&sd, 0, sizeof(sd));
     SNDFILE* f = sf_open(fname, SFM_READ, &sd.sfInfo);
     if (!f) {
         cout << "sfReadFile(): couldn't read \"" << fname << "\"" << endl;
         return false;
     }
+    sd.sfInfo.frames = 1000000;
     
-    sd.dt = new SAMPLE [sd.sz = sd.sfInfo.frames * sd.sfInfo.channels];
+    sd.ping = new SAMPLE [sd.sz = sd.sfInfo.frames * sd.sfInfo.channels];
+    sd.pong = new SAMPLE [sd.sz];
+    memset(sd.pong, 0, sd.sz * sizeof(SAMPLE));
     
-    sf_count_t samples_read = sf_read_float(f, sd.dt, sd.sz);
-    if (samples_read < (int)sd.sz) {
+    sf_count_t samples_read = sf_read_float(f, sd.ping, sd.sfInfo.frames);
+//    if (samples_read < sd.sfInfo.frames) {
         cout << "sfReadFile(): read " << samples_read << " float samples, expected "
-        << sd.sz << " from \"" << fname << "\"" << endl;
-    }
+        << sd.sfInfo.frames << " from \"" << fname << "\"" << endl;
+//    }
     if (sd.sfInfo.samplerate != SAMPLE_RATE) {
         cout << "Sampling frequency " << sd.sfInfo.samplerate << " instead of " << SAMPLE_RATE << endl;
     }
@@ -75,6 +97,7 @@ void compute();
 void report();
 
 int main(int argc, const char * argv[]) {
+//    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
     const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/noise.wav";
     if (argc > 1)
     {
@@ -91,6 +114,7 @@ int main(int argc, const char * argv[]) {
                 makeNoise(inDev, outDev);
                 compute();
                 report();
+                saveWave("record.wav");
             }
         }
         else
@@ -98,8 +122,10 @@ int main(int argc, const char * argv[]) {
             printf(  "PortAudio error: %s\n", Pa_GetErrorText( err ) );
             return 1;
         }
-        delete [] sd.dt;
-        sd.dt = 0;
+        delete [] sd.ping;
+        delete [] sd.pong;
+        sd.ping = 0;
+        sd.pong = 0;
         sd.sz = 0;
         
         err = Pa_Terminate();
@@ -126,7 +152,7 @@ int selectFromList(int numDevices, bool inp)
     }
     switch (cnt) {
         case 0:
-            return 0;
+            return -1;
             
         case 1:
             cout << " --- selected: " << Pa_GetDeviceInfo( idxs[0] )->name << endl;
@@ -157,13 +183,13 @@ bool selectDevices(int *inDev, int *outDev)
     }
     
     int i = selectFromList(numDevices, true);
-    if (i < 1) {
+    if (i < 0) {
         return false;
     }
     *inDev = i;
 
     i = selectFromList(numDevices, false);
-    if (i < 1) {
+    if (i < 0) {
         return false;
     }
     *outDev = i;
@@ -210,7 +236,7 @@ void makeNoise(int inDev, int outDev)
         if( err == paNoError )
         {
             /* Sleep for several seconds. */
-            Pa_Sleep(3*1000);
+            Pa_Sleep(sd.sfInfo.frames * 1000 / SAMPLE_RATE);
             err = Pa_StopStream( stream );
         }
         
