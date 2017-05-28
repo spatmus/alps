@@ -7,7 +7,7 @@
 //
 
 #include <iostream>
-#include <vector>
+#include "fftw3.h"
 #include "portaudio.h"
 #include "sndfile.h"
 
@@ -44,7 +44,6 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
     memcpy(outputBuffer, d.ping + p, sz);
     memcpy(d.pong + p, inputBuffer, sz);
     d.ptr += framesPerBuffer;
-    // TODO
     return d.ptr > d.sfInfo.frames ? paComplete : paContinue;
 }
 
@@ -73,7 +72,7 @@ bool loadWave(const char *fname)
         cout << "sfReadFile(): couldn't read \"" << fname << "\"" << endl;
         return false;
     }
-    sd.sfInfo.frames = 1000000;
+//    sd.sfInfo.frames = 1000000;
     
     sd.ping = new SAMPLE [sd.sz = sd.sfInfo.frames * sd.sfInfo.channels];
     sd.pong = new SAMPLE [sd.sz];

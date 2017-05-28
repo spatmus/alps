@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A84C3D781ED23FFC00E38A5B /* libsndfile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A84C3D771ED23FFC00E38A5B /* libsndfile.a */; };
 		A85E64B91EBF182E004193C9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A85E64B81EBF182E004193C9 /* main.cpp */; };
+		A8B852FF1EDABD2000F86323 /* libfftw3.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B852FE1EDABD2000F86323 /* libfftw3.a */; };
 		A8B9681D1EC8C1DF00244620 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */; };
 		A8B9681F1EC8C22500244620 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B9681E1EC8C22500244620 /* AudioToolbox.framework */; };
 		A8B968211EC8C22E00244620 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B968201EC8C22E00244620 /* CoreAudio.framework */; };
@@ -34,6 +35,8 @@
 		A85E64B51EBF182E004193C9 /* Audio1 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Audio1; sourceTree = BUILT_PRODUCTS_DIR; };
 		A85E64B81EBF182E004193C9 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		A8B852F61EDAB13900F86323 /* portaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = portaudio.h; sourceTree = "<group>"; };
+		A8B852FD1EDABD2000F86323 /* fftw3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fftw3.h; sourceTree = SOURCE_ROOT; };
+		A8B852FE1EDABD2000F86323 /* libfftw3.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libfftw3.a; sourceTree = SOURCE_ROOT; };
 		A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		A8B9681E1EC8C22500244620 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		A8B968201EC8C22E00244620 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -52,6 +55,7 @@
 				A84C3D781ED23FFC00E38A5B /* libsndfile.a in Frameworks */,
 				A8B9681D1EC8C1DF00244620 /* AudioUnit.framework in Frameworks */,
 				A8B968231EC8C2BA00244620 /* libportaudio.a in Frameworks */,
+				A8B852FF1EDABD2000F86323 /* libfftw3.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,6 +87,8 @@
 			isa = PBXGroup;
 			children = (
 				A85E64B81EBF182E004193C9 /* main.cpp */,
+				A8B852FD1EDABD2000F86323 /* fftw3.h */,
+				A8B852FE1EDABD2000F86323 /* libfftw3.a */,
 			);
 			path = Audio1;
 			sourceTree = "<group>";
