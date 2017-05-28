@@ -29,11 +29,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A84C3D751ED237D600E38A5B /* portaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = portaudio.h; path = ../../portaudio.h; sourceTree = "<group>"; };
 		A84C3D771ED23FFC00E38A5B /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsndfile.a; sourceTree = "<group>"; };
 		A84C3D791ED2400900E38A5B /* sndfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sndfile.h; sourceTree = "<group>"; };
 		A85E64B51EBF182E004193C9 /* Audio1 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Audio1; sourceTree = BUILT_PRODUCTS_DIR; };
 		A85E64B81EBF182E004193C9 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		A8B852F61EDAB13900F86323 /* portaudio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = portaudio.h; sourceTree = "<group>"; };
 		A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		A8B9681E1EC8C22500244620 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		A8B968201EC8C22E00244620 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
@@ -63,7 +63,7 @@
 			children = (
 				A84C3D791ED2400900E38A5B /* sndfile.h */,
 				A84C3D771ED23FFC00E38A5B /* libsndfile.a */,
-				A84C3D751ED237D600E38A5B /* portaudio.h */,
+				A8B852F61EDAB13900F86323 /* portaudio.h */,
 				A8B968221EC8C2BA00244620 /* libportaudio.a */,
 				A85E64B71EBF182E004193C9 /* Audio1 */,
 				A85E64B61EBF182E004193C9 /* Products */,

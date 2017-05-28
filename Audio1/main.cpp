@@ -31,21 +31,21 @@ SoundData sd = {0, 0, NULL, NULL};
  It may be called at interrupt level on some machines so don't do anything
  that could mess up the system like calling malloc() or free().
  */
-static int patestCallback( const void *inputBuffer, void *outputBuffer,
+static int paCallback( const void *inputBuffer, void *outputBuffer,
                           unsigned long framesPerBuffer,
                           const PaStreamCallbackTimeInfo* timeInfo,
                           PaStreamCallbackFlags statusFlags,
                           void *userData )
 {
     SoundData &d = *((SoundData*)userData);
-    long p = d.ptr;
+    long p = d.ptr * d.sfInfo.channels;
     long numsamples = framesPerBuffer * d.sfInfo.channels;
     long sz = sizeof(SAMPLE) * numsamples;
     memcpy(outputBuffer, d.ping + p, sz);
     memcpy(d.pong + p, inputBuffer, sz);
-    d.ptr += numsamples;
+    d.ptr += framesPerBuffer;
     // TODO
-    return d.ptr * sizeof(SAMPLE) > d.sz ? paComplete : paContinue;
+    return d.ptr > d.sfInfo.frames ? paComplete : paContinue;
 }
 
 void saveWave(const char *fname)
@@ -79,11 +79,11 @@ bool loadWave(const char *fname)
     sd.pong = new SAMPLE [sd.sz];
     memset(sd.pong, 0, sd.sz * sizeof(SAMPLE));
     
-    sf_count_t samples_read = sf_read_float(f, sd.ping, sd.sfInfo.frames);
-//    if (samples_read < sd.sfInfo.frames) {
+    sf_count_t samples_read = sf_read_float(f, sd.ping, sd.sz);
+    if (samples_read < sd.sz) {
         cout << "sfReadFile(): read " << samples_read << " float samples, expected "
-        << sd.sfInfo.frames << " from \"" << fname << "\"" << endl;
-//    }
+        << sd.sz << " from \"" << fname << "\"" << endl;
+    }
     if (sd.sfInfo.samplerate != SAMPLE_RATE) {
         cout << "Sampling frequency " << sd.sfInfo.samplerate << " instead of " << SAMPLE_RATE << endl;
     }
@@ -111,7 +111,9 @@ int main(int argc, const char * argv[]) {
         {
             if (selectDevices(&inDev, &outDev))
             {
+                time_t t0 = time(0);
                 makeNoise(inDev, outDev);
+                cout << "time " << time(0) - t0 << endl;
                 compute();
                 report();
                 saveWave("record.wav");
@@ -223,7 +225,7 @@ void makeNoise(int inDev, int outDev)
                                                 tells PortAudio to pick the best,
                                                 possibly changing, buffer size.*/
                                  paNoFlag,
-                                 patestCallback, /* this is your callback function */
+                                 paCallback, /* this is your callback function */
 				 &sd ); /*This is a pointer that will be passed to
                                                your callback*/
     if( err != paNoError )
