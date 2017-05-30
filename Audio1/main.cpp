@@ -7,7 +7,7 @@
 //
 
 #include <iostream>
-#include "../alglib/src/statistics.h"
+#include "../alglib/src/fasttransforms.h"
 #include "portaudio.h"
 #include "sndfile.h"
 
@@ -61,8 +61,8 @@ void compute();
 void report();
 
 int main(int argc, const char * argv[]) {
-//    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
-    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
+    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
+//    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
     if (argc > 1)
     {
         fname = argv[1];
@@ -81,11 +81,13 @@ int main(int argc, const char * argv[]) {
         {
             if (selectDevices(&inDev, &outDev))
             {
-                time_t t0 = time(0);
-                makeNoise(inDev, outDev);
-                cout << "time " << time(0) - t0 << endl;
-                compute();
-                report();
+                for (int i = 0; i < 10; i++)
+                {
+                    cout << "run " << (i + 1) << endl;
+                    makeNoise(inDev, outDev);
+                    compute();
+                    report();
+                }
                 saveWave("record.wav");
             }
         }
@@ -185,6 +187,8 @@ void makeNoise(int inDev, int outDev)
     outPars.device = outDev;
     outPars.channelCount = sd.sfInfo.channels;
     
+    sd.ptr = 0;
+    
     /* Open an audio I/O stream. */
     PaError err = Pa_OpenStream( &stream,
                                  &inPars,          /* no input channels */
@@ -223,9 +227,23 @@ void makeNoise(int inDev, int outDev)
 void xcorr(int refChannel, int sigChannel, SAMPLE * res)
 {
     int sz = (int)sd.sfInfo.frames;
-    alglib::real_1d_array x, y;
+    alglib::real_1d_array x, y, r;
     x.setlength(sz);
     y.setlength(sz);
+    r.setlength(sz);
+    int ch = sd.sfInfo.channels;
+    for (int i = 0; i < sz; i++)
+    {
+        x[i] = sd.ping[i * ch + refChannel];
+        y[i] = sd.pong[i * ADC_INPUTS + sigChannel];
+    }
+    
+    alglib::corrr1dcircular(y, sz, x, sz, r);
+    
+    for (int i = 0; i < sz; i++)
+    {
+        res[i] = r[i];
+    }
 }
 
 int findMaxAbs(SAMPLE *d, int sz)
@@ -246,6 +264,7 @@ int findMaxAbs(SAMPLE *d, int sz)
 
 void compute()
 {
+    memset(delays, 0, sizeof(delays));
     int num = sd.sfInfo.channels; // output channels
     SAMPLE *res = new SAMPLE[sd.sfInfo.frames];
     for (int n = 0; n < num; n++)
@@ -255,7 +274,6 @@ void compute()
         {
             xcorr(n, inp, res);
             int idx = findMaxAbs(res, (int)sd.sfInfo.frames);
-            cout << idx << endl;
             delays[n][inp] = idx;
         }
     }
@@ -276,7 +294,14 @@ void compute()
 
 void report()
 {
-    
+    int num = sd.sfInfo.channels; // output channels
+    for (int n = 0; n < num; n++)
+    {
+        for (int inp = 0; inp < ADC_INPUTS; inp++)
+        {
+            cout << n << ":" << inp << " " << (float)delays[n][inp] / SAMPLE_RATE * 330 << endl;
+        }
+    }
 }
 
 void saveWave(const char *fname)
