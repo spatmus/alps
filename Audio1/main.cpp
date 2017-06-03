@@ -18,6 +18,12 @@ typedef float SAMPLE;
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
 
+// speaker coordinates x,y
+float xy[][2] = {
+    {0, 0},
+    {1.5, 0}
+};
+
 using namespace std;
 
 struct SoundData {
@@ -292,14 +298,74 @@ void compute()
     delete [] res;
 }
 
+// Estimates the location x, y from distances d1,d2 to speakers
+// located at 0,0 and L,0
+bool distToXY(float d1, float d2, float L, float *x, float *y)
+{
+    *x = (d1 * d1 + L * L - d2 * d2) / 2 / L;
+    if (d1 >= *x)
+    {
+        *y = sqrt(d1 * d1 - *x * *x);
+        return true;
+    }
+    
+    return false;
+}
+
+// Estimates the location x, y from distances d1,d2 to speakers n and m
+// located at xy[n] and xy[m], see above
+bool distToXY(float d1, float d2, int n, int m, float *x, float *y)
+{
+    float x1 = xy[n][0];
+    float y1 = xy[n][1];
+    float x2 = xy[m][0];
+    float y2 = xy[m][1];
+    float dx = x2 - x1;
+    float dy = y2 - y1;
+    float L = sqrtf(dx * dx + dy * dy);
+    float a = atan2f(dy, dx);
+    float X, Y;
+    if (distToXY(d1, d2, L, &X, &Y))
+    {
+        float si = sinf(a);
+        float co = cosf(a);
+        *x = x1 + X * co - Y * si;
+        *y = y1 + X * si + Y * co;
+        return true;
+    }
+    
+    return false;
+}
+
 void report()
 {
     int num = sd.sfInfo.channels; // output channels
-    for (int n = 0; n < num; n++)
+    // for all microphones
+    for (int inp = 0; inp < ADC_INPUTS - 1; inp++)
     {
-        for (int inp = 0; inp < ADC_INPUTS; inp++)
+        cout << "input:" << inp << endl;
+        // for all speakers
+        for (int n = 0; n < num; n++)
         {
-            cout << n << ":" << inp << " " << (float)delays[n][inp] / SAMPLE_RATE * 330 << endl;
+            float d1 = (float)delays[n][inp] / SAMPLE_RATE * 330;
+            cout << "speaker: " << n << " dist: " << d1 << endl;
+            // for all pairs of speakers
+            for (int m = 0; m < num; m++)
+            {
+                if (n != m)
+                {
+                    float d2 = (float)delays[m][inp] / SAMPLE_RATE * 330;
+                    float x, y;
+                    if (distToXY(d1, d2, n, m, &x, &y))
+                    {
+                        cout << "x: " << x << " y: " << y << endl;
+                    }
+                    else
+                    {
+                        cout << "no result" << endl;
+                    }
+                }
+            }
         }
     }
 }
