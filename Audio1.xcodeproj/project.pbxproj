@@ -12,16 +12,7 @@
 		A8B8531C1EDB4B8B00F86323 /* alglibinternal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853011EDB4B8A00F86323 /* alglibinternal.cpp */; };
 		A8B8531D1EDB4B8B00F86323 /* alglibmisc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853031EDB4B8A00F86323 /* alglibmisc.cpp */; };
 		A8B8531E1EDB4B8B00F86323 /* ap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853051EDB4B8A00F86323 /* ap.cpp */; };
-		A8B8531F1EDB4B8B00F86323 /* dataanalysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853071EDB4B8A00F86323 /* dataanalysis.cpp */; };
-		A8B853201EDB4B8B00F86323 /* diffequations.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853091EDB4B8A00F86323 /* diffequations.cpp */; };
 		A8B853211EDB4B8B00F86323 /* fasttransforms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B8530B1EDB4B8A00F86323 /* fasttransforms.cpp */; };
-		A8B853221EDB4B8B00F86323 /* integration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B8530D1EDB4B8A00F86323 /* integration.cpp */; };
-		A8B853231EDB4B8B00F86323 /* interpolation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B8530F1EDB4B8A00F86323 /* interpolation.cpp */; };
-		A8B853241EDB4B8B00F86323 /* linalg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853111EDB4B8A00F86323 /* linalg.cpp */; };
-		A8B853251EDB4B8B00F86323 /* optimization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853131EDB4B8A00F86323 /* optimization.cpp */; };
-		A8B853261EDB4B8B00F86323 /* solvers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853151EDB4B8A00F86323 /* solvers.cpp */; };
-		A8B853271EDB4B8B00F86323 /* specialfunctions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853171EDB4B8B00F86323 /* specialfunctions.cpp */; };
-		A8B853281EDB4B8B00F86323 /* statistics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853191EDB4B8B00F86323 /* statistics.cpp */; };
 		A8B9681D1EC8C1DF00244620 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */; };
 		A8B9681F1EC8C22500244620 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B9681E1EC8C22500244620 /* AudioToolbox.framework */; };
 		A8B968211EC8C22E00244620 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A8B968201EC8C22E00244620 /* CoreAudio.framework */; };
@@ -53,26 +44,8 @@
 		A8B853041EDB4B8A00F86323 /* alglibmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = alglibmisc.h; path = alglib/src/alglibmisc.h; sourceTree = "<group>"; };
 		A8B853051EDB4B8A00F86323 /* ap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ap.cpp; path = alglib/src/ap.cpp; sourceTree = "<group>"; };
 		A8B853061EDB4B8A00F86323 /* ap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ap.h; path = alglib/src/ap.h; sourceTree = "<group>"; };
-		A8B853071EDB4B8A00F86323 /* dataanalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dataanalysis.cpp; path = alglib/src/dataanalysis.cpp; sourceTree = "<group>"; };
-		A8B853081EDB4B8A00F86323 /* dataanalysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dataanalysis.h; path = alglib/src/dataanalysis.h; sourceTree = "<group>"; };
-		A8B853091EDB4B8A00F86323 /* diffequations.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = diffequations.cpp; path = alglib/src/diffequations.cpp; sourceTree = "<group>"; };
-		A8B8530A1EDB4B8A00F86323 /* diffequations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = diffequations.h; path = alglib/src/diffequations.h; sourceTree = "<group>"; };
 		A8B8530B1EDB4B8A00F86323 /* fasttransforms.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fasttransforms.cpp; path = alglib/src/fasttransforms.cpp; sourceTree = "<group>"; };
 		A8B8530C1EDB4B8A00F86323 /* fasttransforms.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fasttransforms.h; path = alglib/src/fasttransforms.h; sourceTree = "<group>"; };
-		A8B8530D1EDB4B8A00F86323 /* integration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = integration.cpp; path = alglib/src/integration.cpp; sourceTree = "<group>"; };
-		A8B8530E1EDB4B8A00F86323 /* integration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = integration.h; path = alglib/src/integration.h; sourceTree = "<group>"; };
-		A8B8530F1EDB4B8A00F86323 /* interpolation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = interpolation.cpp; path = alglib/src/interpolation.cpp; sourceTree = "<group>"; };
-		A8B853101EDB4B8A00F86323 /* interpolation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = interpolation.h; path = alglib/src/interpolation.h; sourceTree = "<group>"; };
-		A8B853111EDB4B8A00F86323 /* linalg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = linalg.cpp; path = alglib/src/linalg.cpp; sourceTree = "<group>"; };
-		A8B853121EDB4B8A00F86323 /* linalg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = linalg.h; path = alglib/src/linalg.h; sourceTree = "<group>"; };
-		A8B853131EDB4B8A00F86323 /* optimization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = optimization.cpp; path = alglib/src/optimization.cpp; sourceTree = "<group>"; };
-		A8B853141EDB4B8A00F86323 /* optimization.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = optimization.h; path = alglib/src/optimization.h; sourceTree = "<group>"; };
-		A8B853151EDB4B8A00F86323 /* solvers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = solvers.cpp; path = alglib/src/solvers.cpp; sourceTree = "<group>"; };
-		A8B853161EDB4B8B00F86323 /* solvers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = solvers.h; path = alglib/src/solvers.h; sourceTree = "<group>"; };
-		A8B853171EDB4B8B00F86323 /* specialfunctions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = specialfunctions.cpp; path = alglib/src/specialfunctions.cpp; sourceTree = "<group>"; };
-		A8B853181EDB4B8B00F86323 /* specialfunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = specialfunctions.h; path = alglib/src/specialfunctions.h; sourceTree = "<group>"; };
-		A8B853191EDB4B8B00F86323 /* statistics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = statistics.cpp; path = alglib/src/statistics.cpp; sourceTree = "<group>"; };
-		A8B8531A1EDB4B8B00F86323 /* statistics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = statistics.h; path = alglib/src/statistics.h; sourceTree = "<group>"; };
 		A8B8531B1EDB4B8B00F86323 /* stdafx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stdafx.h; path = alglib/src/stdafx.h; sourceTree = "<group>"; };
 		A8B9681C1EC8C1DF00244620 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		A8B9681E1EC8C22500244620 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -107,26 +80,8 @@
 				A8B853041EDB4B8A00F86323 /* alglibmisc.h */,
 				A8B853051EDB4B8A00F86323 /* ap.cpp */,
 				A8B853061EDB4B8A00F86323 /* ap.h */,
-				A8B853071EDB4B8A00F86323 /* dataanalysis.cpp */,
-				A8B853081EDB4B8A00F86323 /* dataanalysis.h */,
-				A8B853091EDB4B8A00F86323 /* diffequations.cpp */,
-				A8B8530A1EDB4B8A00F86323 /* diffequations.h */,
 				A8B8530B1EDB4B8A00F86323 /* fasttransforms.cpp */,
 				A8B8530C1EDB4B8A00F86323 /* fasttransforms.h */,
-				A8B8530D1EDB4B8A00F86323 /* integration.cpp */,
-				A8B8530E1EDB4B8A00F86323 /* integration.h */,
-				A8B8530F1EDB4B8A00F86323 /* interpolation.cpp */,
-				A8B853101EDB4B8A00F86323 /* interpolation.h */,
-				A8B853111EDB4B8A00F86323 /* linalg.cpp */,
-				A8B853121EDB4B8A00F86323 /* linalg.h */,
-				A8B853131EDB4B8A00F86323 /* optimization.cpp */,
-				A8B853141EDB4B8A00F86323 /* optimization.h */,
-				A8B853151EDB4B8A00F86323 /* solvers.cpp */,
-				A8B853161EDB4B8B00F86323 /* solvers.h */,
-				A8B853171EDB4B8B00F86323 /* specialfunctions.cpp */,
-				A8B853181EDB4B8B00F86323 /* specialfunctions.h */,
-				A8B853191EDB4B8B00F86323 /* statistics.cpp */,
-				A8B8531A1EDB4B8B00F86323 /* statistics.h */,
 				A8B8531B1EDB4B8B00F86323 /* stdafx.h */,
 				A84C3D791ED2400900E38A5B /* sndfile.h */,
 				A84C3D771ED23FFC00E38A5B /* libsndfile.a */,
@@ -222,19 +177,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A8B853281EDB4B8B00F86323 /* statistics.cpp in Sources */,
-				A8B853271EDB4B8B00F86323 /* specialfunctions.cpp in Sources */,
-				A8B853241EDB4B8B00F86323 /* linalg.cpp in Sources */,
 				A8B8531E1EDB4B8B00F86323 /* ap.cpp in Sources */,
-				A8B8531F1EDB4B8B00F86323 /* dataanalysis.cpp in Sources */,
 				A8B853211EDB4B8B00F86323 /* fasttransforms.cpp in Sources */,
 				A85E64B91EBF182E004193C9 /* main.cpp in Sources */,
-				A8B853221EDB4B8B00F86323 /* integration.cpp in Sources */,
 				A8B8531D1EDB4B8B00F86323 /* alglibmisc.cpp in Sources */,
-				A8B853201EDB4B8B00F86323 /* diffequations.cpp in Sources */,
-				A8B853231EDB4B8B00F86323 /* interpolation.cpp in Sources */,
-				A8B853251EDB4B8B00F86323 /* optimization.cpp in Sources */,
-				A8B853261EDB4B8B00F86323 /* solvers.cpp in Sources */,
 				A8B8531C1EDB4B8B00F86323 /* alglibinternal.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -21,7 +21,7 @@ typedef float SAMPLE;
 // speaker coordinates x,y
 float xy[][2] = {
     {0, 0},
-    {1.5, 0}
+    {1.2, 0}
 };
 
 using namespace std;
