@@ -52,9 +52,10 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
                           void *userData )
 {
     SoundData &d = *((SoundData*)userData);
-    long p = d.ptr * d.sfInfo.channels;
-    memcpy(outputBuffer, d.ping + p, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
-    memcpy(d.pong + p, inputBuffer, sizeof(SAMPLE) * framesPerBuffer * ADC_INPUTS);
+    long pOut = d.ptr * d.sfInfo.channels;
+    long pIn = d.ptr * ADC_INPUTS;
+    memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
+    memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * framesPerBuffer * ADC_INPUTS);
     d.ptr += framesPerBuffer;
     return d.ptr > d.sfInfo.frames ? paComplete : paContinue;
 }
