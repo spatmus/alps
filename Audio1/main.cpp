@@ -14,6 +14,7 @@
 #define PA_SAMPLE_TYPE  paFloat32
 typedef float SAMPLE;
 
+#define DURATION    0.4
 #define MAX_OUTPUTS 16
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
@@ -21,7 +22,13 @@ typedef float SAMPLE;
 // speaker coordinates x,y
 float xy[][2] = {
     {0, 0},
-    {1.2, 0}
+    {1.2, 0},
+    {1, 1},
+    {0, 1},
+    {2, 0},
+    {2, 2},
+    {0, 2},
+    {3, 3}
 };
 
 using namespace std;
@@ -57,18 +64,19 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
     memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
     memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * framesPerBuffer * ADC_INPUTS);
     d.ptr += framesPerBuffer;
-    return d.ptr > d.sfInfo.frames ? paComplete : paContinue;
+    return d.ptr >= d.sfInfo.frames ? paComplete : paContinue;
 }
 
 bool loadWave(const char *fname);
 void saveWave(const char *fname);
 bool selectDevices(int *inDev, int *outDev);
-void makeNoise(int inDev, int outDev);
+bool makeNoise(int inDev, int outDev);
 void compute();
 void report();
 
 int main(int argc, const char * argv[]) {
-    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
+//    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
+    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/4ch.wav";
 //    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
     if (argc > 1)
     {
@@ -78,7 +86,11 @@ int main(int argc, const char * argv[]) {
     int inDev = -1, outDev = -1;
     if (loadWave(fname))
     {
-        float duration = 2.0;
+        float duration = (float)sd.sfInfo.frames / SAMPLE_RATE;
+        if (duration > DURATION)
+        {
+            duration = DURATION;
+        }
         sd.sfInfo.frames = duration * SAMPLE_RATE;
         sd.szOut = sd.sfInfo.frames * sd.sfInfo.channels;
         sd.szIn = sd.sfInfo.frames * ADC_INPUTS;
@@ -91,11 +103,11 @@ int main(int argc, const char * argv[]) {
                 for (int i = 0; i < 10; i++)
                 {
                     cout << "run " << (i + 1) << endl;
-                    makeNoise(inDev, outDev);
+                    if (!makeNoise(inDev, outDev)) break;
                     compute();
                     report();
                 }
-                saveWave("record.wav");
+                // saveWave("record.wav");
             }
         }
         else
@@ -180,7 +192,7 @@ bool selectDevices(int *inDev, int *outDev)
     return true;
 }
 
-void makeNoise(int inDev, int outDev)
+bool makeNoise(int inDev, int outDev)
 {
     PaStream *stream;
     PaStreamParameters inPars;
@@ -215,6 +227,7 @@ void makeNoise(int inDev, int outDev)
     if( err != paNoError )
     {
         printf(  "PortAudio error: %s\n", Pa_GetErrorText( err ) );
+        return false;
     }
     else
     {
@@ -228,6 +241,7 @@ void makeNoise(int inDev, int outDev)
         
         Pa_CloseStream( stream );
     }
+    return true;
 }
 
 // crosscorrelation for data from sd.ping and sd.pong, with given channels
