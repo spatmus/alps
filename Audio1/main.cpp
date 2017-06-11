@@ -19,6 +19,10 @@ typedef float SAMPLE;
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
 
+// const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
+const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
+// const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/4ch.wav";
+
 // speaker coordinates x,y
 float xy[][2] = {
     {0, 0},
@@ -75,9 +79,6 @@ void compute();
 void report();
 
 int main(int argc, const char * argv[]) {
-//    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
-    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/4ch.wav";
-//    const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
     if (argc > 1)
     {
         fname = argv[1];
@@ -358,22 +359,31 @@ void report()
     // for all microphones
     for (int inp = 0; inp < ADC_INPUTS - 1; inp++)
     {
+        float X = 0, Y = 0;
+        int averNum = 0;
         cout << "input:" << inp << endl;
         // for all speakers
         for (int n = 0; n < num; n++)
         {
             float d1 = (float)delays[n][inp] / SAMPLE_RATE * 330;
             cout << "speaker: " << n << " dist: " << d1 << endl;
+            if (!d1) continue;
+            
             // for all pairs of speakers
             for (int m = 0; m < num; m++)
             {
                 if (n != m)
                 {
                     float d2 = (float)delays[m][inp] / SAMPLE_RATE * 330;
+                    if (!d2) continue;
+                    
                     float x, y;
                     if (distToXY(d1, d2, n, m, &x, &y))
                     {
                         cout << "x: " << x << " y: " << y << endl;
+                        X += x;
+                        Y += y;
+                        averNum++;
                     }
                     else
                     {
@@ -381,6 +391,15 @@ void report()
                     }
                 }
             }
+        }
+        if (averNum)
+        {
+            cout << "position estimate for mic " << inp <<
+                " x=" << (X /averNum) << " y=" << (Y / averNum) << endl;
+        }
+        else
+        {
+            cout << "no estimate for mic " << inp << endl;
         }
     }
 }
