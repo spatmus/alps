@@ -15,6 +15,7 @@
 typedef float SAMPLE;
 
 #define DURATION    0.4
+#define FADE_PART   0.1
 #define MAX_OUTPUTS 16
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
@@ -72,6 +73,7 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
 }
 
 bool loadWave(const char *fname);
+void fadeInOut();
 void saveWave(const char *fname);
 bool selectDevices(int *inDev, int *outDev);
 bool makeNoise(int inDev, int outDev);
@@ -95,6 +97,7 @@ int main(int argc, const char * argv[]) {
         sd.sfInfo.frames = duration * SAMPLE_RATE;
         sd.szOut = sd.sfInfo.frames * sd.sfInfo.channels;
         sd.szIn = sd.sfInfo.frames * ADC_INPUTS;
+        fadeInOut();
         
         PaError err = Pa_Initialize();
         if( err == paNoError )
@@ -446,3 +449,14 @@ bool loadWave(const char *fname)
     return true;
 }
 
+void fadeInOut()
+{
+    int last = sd.szOut - 1;
+    int fdCnt = FADE_PART * sd.szOut;
+    for (int i = 0; i < fdCnt; i++)
+    {
+        float v = (float) i / fdCnt;
+        sd.ping[i] *= v;
+        sd.ping[last - i] *= v;
+    }
+}
