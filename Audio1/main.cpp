@@ -15,7 +15,7 @@
 typedef float SAMPLE;
 
 #define DURATION    0.4
-#define FADE_PART   0.1
+#define FADE_PART   0.2
 #define MAX_OUTPUTS 16
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
@@ -239,7 +239,7 @@ bool makeNoise(int inDev, int outDev)
         if( err == paNoError )
         {
             /* Sleep for several seconds. */
-            Pa_Sleep(sd.sfInfo.frames * 1000 / SAMPLE_RATE + 200);
+            Pa_Sleep(sd.sfInfo.frames * 1000 / SAMPLE_RATE + 20);
             err = Pa_StopStream( stream );
         }
         
@@ -451,9 +451,9 @@ bool loadWave(const char *fname)
 
 void fadeInOut()
 {
-    int last = sd.szOut - 1;
+    long last = sd.szOut - 1;
     int fdCnt = FADE_PART * sd.szOut;
-    for (int i = 0; i < fdCnt; i++)
+    for (long i = 0; i < fdCnt; i++)
     {
         float v = (float) i / fdCnt;
         sd.ping[i] *= v;
