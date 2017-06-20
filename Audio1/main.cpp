@@ -46,6 +46,7 @@ struct SoundData {
     long        ptr;
     SAMPLE      *ping;
     SAMPLE      *pong;
+    SAMPLE      *bang;
     SF_INFO     sfInfo;
     int         empty;
 };
@@ -77,6 +78,10 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
     }
     else
     {
+        if (!d.empty)
+        {
+            memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * ADC_INPUTS);
+        }
         memset(outputBuffer, 0, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
         if (d.empty++ > 1000) return paComplete;
     }
@@ -118,9 +123,15 @@ int main(int argc, const char * argv[]) {
                 for (int i = 0; i < REPEAT; i++)
                 {
                     cout << "run " << (i + 1) << endl;
-                    if (!makeNoise(inDev, outDev)) break;
-                    compute();
-                    report();
+                    thread noise(makeNoise, inDev, outDev);
+//                                 if (!makeNoise(inDev, outDev)) break;
+                    thread comp(compute);
+                    comp.join();
+                    noise.join();
+                    if (i)
+                    {
+                        report();
+                    }
                 }
                 // saveWave("record.wav");
             }
@@ -132,8 +143,10 @@ int main(int argc, const char * argv[]) {
         }
         delete [] sd.ping;
         delete [] sd.pong;
+        delete [] sd.bang;
         sd.ping = 0;
         sd.pong = 0;
+        sd.bang = 0;
         sd.szIn = 0;
         sd.szOut = 0;
         
@@ -278,7 +291,7 @@ void xcorr(int refChannel, int sigChannel, SAMPLE * res)
     for (int i = 0; i < sz; i++)
     {
         x[i] = sd.ping[i * ch + refChannel];
-        y[i] = sd.pong[i * ADC_INPUTS + sigChannel];
+        y[i] = sd.bang[i * ADC_INPUTS + sigChannel];
     }
     
     alglib::corrr1dcircular(y, sz, x, sz, r);
@@ -431,7 +444,7 @@ void saveWave(const char *fname)
     if (!f) {
         cout << "sfWriteFile(): couldn't open \"" << fname << "\"" << endl;
     } else {
-        sf_count_t samples_written = sf_write_float(f, sd.pong, sd.szIn);
+        sf_count_t samples_written = sf_write_float(f, sd.bang, sd.szIn);
         if (samples_written != (int)sd.szIn) {
             cout << "saveWave(): written " << samples_written << " float samples, expected "
             << sd.szIn << " to \"" << fname << "\"" << endl;
@@ -444,6 +457,7 @@ bool loadWave(const char *fname)
 {
     delete [] sd.ping;
     delete [] sd.pong;
+    delete [] sd.bang;
     memset(&sd, 0, sizeof(sd));
     SNDFILE* f = sf_open(fname, SFM_READ, &sd.sfInfo);
     if (!f) {
@@ -453,7 +467,9 @@ bool loadWave(const char *fname)
     
     sd.ping = new SAMPLE [sd.szOut = sd.sfInfo.frames * sd.sfInfo.channels];
     sd.pong = new SAMPLE [sd.szIn = sd.sfInfo.frames * ADC_INPUTS];
+    sd.bang = new SAMPLE [sd.szIn = sd.sfInfo.frames * ADC_INPUTS];
     memset(sd.pong, 0, sd.szIn * sizeof(SAMPLE));
+    memset(sd.bang, 0, sd.szIn * sizeof(SAMPLE));
     
     sf_count_t samples_read = sf_read_float(f, sd.ping, sd.szOut);
     if (samples_read != sd.szOut) {
