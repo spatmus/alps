@@ -7,6 +7,7 @@
 //
 
 #include <iostream>
+#include <thread>
 #include "../alglib/src/fasttransforms.h"
 #include "portaudio.h"
 #include "sndfile.h"
@@ -19,8 +20,9 @@ typedef float SAMPLE;
 #define MAX_OUTPUTS 16
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
+#define REPEAT      50
 
-// const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
+//const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
 const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
 // const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/4ch.wav";
 
@@ -45,6 +47,7 @@ struct SoundData {
     SAMPLE      *ping;
     SAMPLE      *pong;
     SF_INFO     sfInfo;
+    int         empty;
 };
 
 SoundData sd = {0, 0, 0, NULL, NULL};
@@ -64,12 +67,20 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
                           void *userData )
 {
     SoundData &d = *((SoundData*)userData);
-    long pOut = d.ptr * d.sfInfo.channels;
-    long pIn = d.ptr * ADC_INPUTS;
-    memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
-    memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * framesPerBuffer * ADC_INPUTS);
-    d.ptr += framesPerBuffer;
-    return d.ptr >= d.sfInfo.frames ? paComplete : paContinue;
+    if (d.ptr < d.sfInfo.frames)
+    {
+        long pOut = d.ptr * d.sfInfo.channels;
+        long pIn = d.ptr * ADC_INPUTS;
+        memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
+        memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * framesPerBuffer * ADC_INPUTS);
+        d.ptr += framesPerBuffer;
+    }
+    else
+    {
+        memset(outputBuffer, 0, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
+        if (d.empty++ > 1000) return paComplete;
+    }
+    return paContinue;
 }
 
 bool loadWave(const char *fname);
@@ -104,7 +115,7 @@ int main(int argc, const char * argv[]) {
         {
             if (selectDevices(&inDev, &outDev))
             {
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < REPEAT; i++)
                 {
                     cout << "run " << (i + 1) << endl;
                     if (!makeNoise(inDev, outDev)) break;
@@ -211,6 +222,7 @@ bool makeNoise(int inDev, int outDev)
     outPars.channelCount = sd.sfInfo.channels;
     
     sd.ptr = 0;
+    sd.empty = 0;
     
     /* Open an audio I/O stream. */
     PaError err = Pa_OpenStream( &stream,
@@ -238,8 +250,14 @@ bool makeNoise(int inDev, int outDev)
         err = Pa_StartStream( stream );
         if( err == paNoError )
         {
+            int cnt = 0;
             /* Sleep for several seconds. */
-            Pa_Sleep(sd.sfInfo.frames * 1000 / SAMPLE_RATE + 20);
+            while (sd.ptr < sd.sfInfo.frames)
+            {
+                ++cnt;
+                Pa_Sleep(20);
+            }
+            cout << "counter=" << cnt << endl;
             err = Pa_StopStream( stream );
         }
         
