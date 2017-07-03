@@ -7,7 +7,6 @@
 //
 
 #include <iostream>
-#include <thread>
 #include "../alglib/src/fasttransforms.h"
 #include "portaudio.h"
 #include "sndfile.h"
@@ -21,6 +20,7 @@ typedef float SAMPLE;
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
 #define REPEAT      50
+#define EXTRA_PLAY  20
 
 //const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
 const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
@@ -70,20 +70,24 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
     SoundData &d = *((SoundData*)userData);
     if (d.ptr < d.sfInfo.frames)
     {
+        long long frames = d.sfInfo.frames - d.ptr;
+        if (frames > framesPerBuffer)
+        {
+            frames = framesPerBuffer;
+        }
         long pOut = d.ptr * d.sfInfo.channels;
         long pIn = d.ptr * ADC_INPUTS;
-        memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
-        memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * framesPerBuffer * ADC_INPUTS);
-        d.ptr += framesPerBuffer;
+        memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * frames * d.sfInfo.channels);
+        memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * frames * ADC_INPUTS);
+        d.ptr += frames;
     }
     else
     {
-        if (!d.empty)
+        if (d.empty-- == EXTRA_PLAY)
         {
             memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * ADC_INPUTS);
         }
         memset(outputBuffer, 0, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
-        if (d.empty++ > 1000) return paComplete;
     }
     return paContinue;
 }
@@ -92,7 +96,7 @@ bool loadWave(const char *fname);
 void fadeInOut();
 void saveWave(const char *fname);
 bool selectDevices(int *inDev, int *outDev);
-bool makeNoise(int inDev, int outDev);
+bool openStream(int inDev, int outDev, PaStream **stream);
 void compute();
 void report();
 
@@ -118,22 +122,32 @@ int main(int argc, const char * argv[]) {
         PaError err = Pa_Initialize();
         if( err == paNoError )
         {
-            if (selectDevices(&inDev, &outDev))
+            PaStream *stream = 0;
+            if (selectDevices(&inDev, &outDev) && openStream(inDev, outDev, &stream))
             {
                 for (int i = 0; i < REPEAT; i++)
                 {
                     cout << "run " << (i + 1) << endl;
-                    thread noise(makeNoise, inDev, outDev);
-//                                 if (!makeNoise(inDev, outDev)) break;
-                    thread comp(compute);
-                    comp.join();
-                    noise.join();
+                    compute();
                     if (i)
                     {
                         report();
                     }
+
+                    int cnt = 0;
+                    /* wait until the entire signal has been played */
+                    while (sd.empty > 0)
+                    {
+                        ++cnt;
+                        Pa_Sleep(10);
+                    }
+                    cout << "counter=" << cnt << endl;
+                    sd.ptr = 0;
+                    sd.empty = EXTRA_PLAY;
                 }
-                // saveWave("record.wav");
+                Pa_StopStream(stream);
+                Pa_CloseStream(stream);
+                saveWave("record.wav");
             }
         }
         else
@@ -220,9 +234,8 @@ bool selectDevices(int *inDev, int *outDev)
     return true;
 }
 
-bool makeNoise(int inDev, int outDev)
+bool openStream(int inDev, int outDev, PaStream **stream)
 {
-    PaStream *stream;
     PaStreamParameters inPars;
     inPars.device = inDev;
     inPars.channelCount = ADC_INPUTS; // sd.sfInfo.channels;
@@ -235,10 +248,10 @@ bool makeNoise(int inDev, int outDev)
     outPars.channelCount = sd.sfInfo.channels;
     
     sd.ptr = 0;
-    sd.empty = 0;
+    sd.empty = EXTRA_PLAY;
     
     /* Open an audio I/O stream. */
-    PaError err = Pa_OpenStream( &stream,
+    PaError err = Pa_OpenStream( stream,
                                  &inPars,          /* no input channels */
                                  &outPars,          /* stereo output */
                                  SAMPLE_RATE,
@@ -255,27 +268,16 @@ bool makeNoise(int inDev, int outDev)
                                                your callback*/
     if( err != paNoError )
     {
-        printf(  "PortAudio error: %s\n", Pa_GetErrorText( err ) );
+        printf(  "PortAudio open error: %s\n", Pa_GetErrorText( err ) );
         return false;
     }
-    else
+    err = Pa_StartStream(*stream);
+    if( err != paNoError )
     {
-        err = Pa_StartStream( stream );
-        if( err == paNoError )
-        {
-            int cnt = 0;
-            /* Sleep for several seconds. */
-            while (sd.ptr < sd.sfInfo.frames)
-            {
-                ++cnt;
-                Pa_Sleep(20);
-            }
-            cout << "counter=" << cnt << endl;
-            err = Pa_StopStream( stream );
-        }
-        
-        Pa_CloseStream( stream );
+        printf(  "PortAudio start error: %s\n", Pa_GetErrorText( err ) );
+        return false;
     }
+    
     return true;
 }
 
