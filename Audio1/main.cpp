@@ -27,9 +27,9 @@ const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2
 // const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/4ch.wav";
 
 // speaker coordinates x,y
-float xy[][2] = {
-    {0, 0},
-    {1.2, 0},
+float xy[][3] = {
+    {0, 0, 0.8},
+    {1.2, 0, 0.8},
     {1, 1},
     {0, 1},
     {2, 0},
@@ -389,6 +389,16 @@ bool distToXY(float d1, float d2, int n, int m, float *x, float *y)
     return false;
 }
 
+double pythagor(double d, double z)
+{
+    if (d < z)
+    {
+        cout << "pythagor error " << d << " < " << z << endl;
+        return 0;
+    }
+    return sqrt(d * d - z * z);
+}
+
 void report()
 {
     int num = sd.sfInfo.channels; // output channels
@@ -402,29 +412,28 @@ void report()
         for (int n = 0; n < num; n++)
         {
             float d1 = (float)delays[n][inp] / SAMPLE_RATE * 330;
-            cout << "speaker: " << n << " dist: " << d1 << endl;
             if (!d1) continue;
+            d1 = pythagor(d1, xy[2][n]);
+            cout << "speaker: " << n << " dist: " << d1 << endl;
             
             // for all pairs of speakers
-            for (int m = 0; m < num; m++)
+            for (int m = n + 1; m < num; m++)
             {
-                if (n != m)
+                float d2 = (float)delays[m][inp] / SAMPLE_RATE * 330;
+                if (!d2) continue;
+                d2 = pythagor(d2, xy[2][m]);
+                
+                float x, y;
+                if (distToXY(d1, d2, n, m, &x, &y))
                 {
-                    float d2 = (float)delays[m][inp] / SAMPLE_RATE * 330;
-                    if (!d2) continue;
-                    
-                    float x, y;
-                    if (distToXY(d1, d2, n, m, &x, &y))
-                    {
-                        cout << "x: " << x << " y: " << y << endl;
-                        X += x;
-                        Y += y;
-                        averNum++;
-                    }
-                    else
-                    {
-                        cout << "no result" << endl;
-                    }
+                    cout << "x: " << x << " y: " << y << endl;
+                    X += x;
+                    Y += y;
+                    averNum++;
+                }
+                else
+                {
+                    cout << "no result" << endl;
                 }
             }
         }
