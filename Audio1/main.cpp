@@ -7,9 +7,13 @@
 //
 
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "../alglib/src/fasttransforms.h"
 #include "portaudio.h"
 #include "sndfile.h"
+#include "lo.h"
 
 #define PA_SAMPLE_TYPE  paFloat32
 typedef float SAMPLE;
@@ -21,6 +25,8 @@ typedef float SAMPLE;
 #define SAMPLE_RATE 96000
 #define REPEAT      50
 #define EXTRA_PLAY  20
+#define OSC_IP      "192.168.1.7" 
+#define OSC_PORT    "7770"
 
 //const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
 const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
@@ -98,7 +104,7 @@ void saveWave(const char *fname);
 bool selectDevices(int *inDev, int *outDev);
 bool openStream(int inDev, int outDev, PaStream **stream);
 void compute();
-void report();
+void report(lo_address t);
 
 int main(int argc, const char * argv[]) {
     if (argc > 1)
@@ -125,6 +131,7 @@ int main(int argc, const char * argv[]) {
             PaStream *stream = 0;
             if (selectDevices(&inDev, &outDev) && openStream(inDev, outDev, &stream))
             {
+                lo_address t = lo_address_new(OSC_IP, OSC_PORT);
                 for (int i = 0; i < REPEAT; i++)
                 {
                     cout << "run " << (i + 1) << endl;
@@ -399,7 +406,7 @@ double pythagor(double d, double z)
     return sqrt(d * d - z * z);
 }
 
-void report()
+void report(lo_address t)
 {
     int num = sd.sfInfo.channels; // output channels
     // for all microphones
@@ -439,8 +446,17 @@ void report()
         }
         if (averNum)
         {
+            X /= averNum;
+            Y /= averNum;
             cout << "position estimate for mic " << inp <<
-                " x=" << (X /averNum) << " y=" << (Y / averNum) << endl;
+                " x=" << X << " y=" << Y << endl;
+
+            char lbl[40];
+            sprintf(lbl, "/position%d", inp + 1);
+            if (lo_send(t, lbl, "ff", X, Y) == -1) 
+            {
+                cout << "OSC error " << lo_address_errno(t) << lo_address_errstr(t) << endl;
+            }
         }
         else
         {
