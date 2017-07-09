@@ -42,7 +42,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A82887E11F10B853002DB1CF /* liblo.la */ = {isa = PBXFileReference; lastKnownFileType = text; path = liblo.la; sourceTree = "<group>"; };
 		A82887E31F10B91C002DB1CF /* lo_cpp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_cpp.h; path = lo/lo_cpp.h; sourceTree = "<group>"; };
 		A82887E41F10B91C002DB1CF /* lo_endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_endian.h; path = lo/lo_endian.h; sourceTree = "<group>"; };
 		A82887E51F10B91C002DB1CF /* lo_errors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_errors.h; path = lo/lo_errors.h; sourceTree = "<group>"; };
@@ -166,7 +165,6 @@
 		A8B9681B1EC8C1DF00244620 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				A82887E11F10B853002DB1CF /* liblo.la */,
 				A8B968241EC8C51E00244620 /* Carbon.framework */,
 				A8B968201EC8C22E00244620 /* CoreAudio.framework */,
 				A8B9681E1EC8C22500244620 /* AudioToolbox.framework */,
