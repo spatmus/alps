@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A82887EF1F10C57A002DB1CF /* message.c in Sources */ = {isa = PBXBuildFile; fileRef = A82887ED1F10C57A002DB1CF /* message.c */; };
+		A82887F01F10C57A002DB1CF /* send.c in Sources */ = {isa = PBXBuildFile; fileRef = A82887EE1F10C57A002DB1CF /* send.c */; };
+		A82887F31F12771F002DB1CF /* address.c in Sources */ = {isa = PBXBuildFile; fileRef = A82887F21F12771F002DB1CF /* address.c */; };
+		A82887F71F12784E002DB1CF /* server.c in Sources */ = {isa = PBXBuildFile; fileRef = A82887F51F12784E002DB1CF /* server.c */; };
+		A82887FD1F12808D002DB1CF /* blob.c in Sources */ = {isa = PBXBuildFile; fileRef = A82887FA1F12808D002DB1CF /* blob.c */; };
+		A82887FE1F12808D002DB1CF /* bundle.c in Sources */ = {isa = PBXBuildFile; fileRef = A82887FB1F12808D002DB1CF /* bundle.c */; };
+		A82888001F1280E1002DB1CF /* method.c in Sources */ = {isa = PBXBuildFile; fileRef = A82887FF1F1280E1002DB1CF /* method.c */; };
+		A82888041F12813B002DB1CF /* pattern_match.c in Sources */ = {isa = PBXBuildFile; fileRef = A82888021F12813B002DB1CF /* pattern_match.c */; };
+		A82888051F12813B002DB1CF /* timetag.c in Sources */ = {isa = PBXBuildFile; fileRef = A82888031F12813B002DB1CF /* timetag.c */; };
 		A84C3D781ED23FFC00E38A5B /* libsndfile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A84C3D771ED23FFC00E38A5B /* libsndfile.a */; };
 		A85E64B91EBF182E004193C9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A85E64B81EBF182E004193C9 /* main.cpp */; };
 		A8B8531C1EDB4B8B00F86323 /* alglibinternal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A8B853011EDB4B8A00F86323 /* alglibinternal.cpp */; };
@@ -33,6 +42,29 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A82887E11F10B853002DB1CF /* liblo.la */ = {isa = PBXFileReference; lastKnownFileType = text; path = liblo.la; sourceTree = "<group>"; };
+		A82887E31F10B91C002DB1CF /* lo_cpp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_cpp.h; path = lo/lo_cpp.h; sourceTree = "<group>"; };
+		A82887E41F10B91C002DB1CF /* lo_endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_endian.h; path = lo/lo_endian.h; sourceTree = "<group>"; };
+		A82887E51F10B91C002DB1CF /* lo_errors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_errors.h; path = lo/lo_errors.h; sourceTree = "<group>"; };
+		A82887E61F10B91C002DB1CF /* lo_lowlevel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_lowlevel.h; path = lo/lo_lowlevel.h; sourceTree = "<group>"; };
+		A82887E71F10B91C002DB1CF /* lo_macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_macros.h; path = lo/lo_macros.h; sourceTree = "<group>"; };
+		A82887E81F10B91C002DB1CF /* lo_osc_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_osc_types.h; path = lo/lo_osc_types.h; sourceTree = "<group>"; };
+		A82887E91F10B91C002DB1CF /* lo_serverthread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_serverthread.h; path = lo/lo_serverthread.h; sourceTree = "<group>"; };
+		A82887EA1F10B91C002DB1CF /* lo_throw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_throw.h; path = lo/lo_throw.h; sourceTree = "<group>"; };
+		A82887EB1F10B91C002DB1CF /* lo_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_types.h; path = lo/lo_types.h; sourceTree = "<group>"; };
+		A82887EC1F10B91C002DB1CF /* lo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo.h; path = lo/lo.h; sourceTree = "<group>"; };
+		A82887ED1F10C57A002DB1CF /* message.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = message.c; path = lo/message.c; sourceTree = "<group>"; };
+		A82887EE1F10C57A002DB1CF /* send.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = send.c; path = lo/send.c; sourceTree = "<group>"; };
+		A82887F11F12748E002DB1CF /* lo_types_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_types_internal.h; path = lo/lo_types_internal.h; sourceTree = "<group>"; };
+		A82887F21F12771F002DB1CF /* address.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = address.c; path = lo/address.c; sourceTree = "<group>"; };
+		A82887F51F12784E002DB1CF /* server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = server.c; path = lo/server.c; sourceTree = "<group>"; };
+		A82887FA1F12808D002DB1CF /* blob.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = blob.c; path = lo/blob.c; sourceTree = "<group>"; };
+		A82887FB1F12808D002DB1CF /* bundle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bundle.c; path = lo/bundle.c; sourceTree = "<group>"; };
+		A82887FC1F12808D002DB1CF /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = lo/config.h; sourceTree = "<group>"; };
+		A82887FF1F1280E1002DB1CF /* method.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = method.c; path = lo/method.c; sourceTree = "<group>"; };
+		A82888011F12813B002DB1CF /* lo_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lo_internal.h; path = lo/lo_internal.h; sourceTree = "<group>"; };
+		A82888021F12813B002DB1CF /* pattern_match.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pattern_match.c; path = lo/pattern_match.c; sourceTree = "<group>"; };
+		A82888031F12813B002DB1CF /* timetag.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = timetag.c; path = lo/timetag.c; sourceTree = "<group>"; };
 		A84C3D771ED23FFC00E38A5B /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsndfile.a; sourceTree = "<group>"; };
 		A84C3D791ED2400900E38A5B /* sndfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sndfile.h; sourceTree = "<group>"; };
 		A85E64B51EBF182E004193C9 /* Audio1 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Audio1; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -74,6 +106,28 @@
 		A85E64AC1EBF182E004193C9 = {
 			isa = PBXGroup;
 			children = (
+				A82888011F12813B002DB1CF /* lo_internal.h */,
+				A82888021F12813B002DB1CF /* pattern_match.c */,
+				A82888031F12813B002DB1CF /* timetag.c */,
+				A82887FF1F1280E1002DB1CF /* method.c */,
+				A82887FA1F12808D002DB1CF /* blob.c */,
+				A82887FB1F12808D002DB1CF /* bundle.c */,
+				A82887FC1F12808D002DB1CF /* config.h */,
+				A82887F51F12784E002DB1CF /* server.c */,
+				A82887F11F12748E002DB1CF /* lo_types_internal.h */,
+				A82887F21F12771F002DB1CF /* address.c */,
+				A82887ED1F10C57A002DB1CF /* message.c */,
+				A82887EE1F10C57A002DB1CF /* send.c */,
+				A82887E31F10B91C002DB1CF /* lo_cpp.h */,
+				A82887E41F10B91C002DB1CF /* lo_endian.h */,
+				A82887E51F10B91C002DB1CF /* lo_errors.h */,
+				A82887E61F10B91C002DB1CF /* lo_lowlevel.h */,
+				A82887E71F10B91C002DB1CF /* lo_macros.h */,
+				A82887E81F10B91C002DB1CF /* lo_osc_types.h */,
+				A82887E91F10B91C002DB1CF /* lo_serverthread.h */,
+				A82887EA1F10B91C002DB1CF /* lo_throw.h */,
+				A82887EB1F10B91C002DB1CF /* lo_types.h */,
+				A82887EC1F10B91C002DB1CF /* lo.h */,
 				A8B853011EDB4B8A00F86323 /* alglibinternal.cpp */,
 				A8B853021EDB4B8A00F86323 /* alglibinternal.h */,
 				A8B853031EDB4B8A00F86323 /* alglibmisc.cpp */,
@@ -112,6 +166,7 @@
 		A8B9681B1EC8C1DF00244620 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A82887E11F10B853002DB1CF /* liblo.la */,
 				A8B968241EC8C51E00244620 /* Carbon.framework */,
 				A8B968201EC8C22E00244620 /* CoreAudio.framework */,
 				A8B9681E1EC8C22500244620 /* AudioToolbox.framework */,
@@ -177,10 +232,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A82887FD1F12808D002DB1CF /* blob.c in Sources */,
+				A82887F31F12771F002DB1CF /* address.c in Sources */,
+				A82887FE1F12808D002DB1CF /* bundle.c in Sources */,
+				A82888051F12813B002DB1CF /* timetag.c in Sources */,
 				A8B8531E1EDB4B8B00F86323 /* ap.cpp in Sources */,
 				A8B853211EDB4B8B00F86323 /* fasttransforms.cpp in Sources */,
 				A85E64B91EBF182E004193C9 /* main.cpp in Sources */,
+				A82887F01F10C57A002DB1CF /* send.c in Sources */,
+				A82887EF1F10C57A002DB1CF /* message.c in Sources */,
+				A82888041F12813B002DB1CF /* pattern_match.c in Sources */,
 				A8B8531D1EDB4B8B00F86323 /* alglibmisc.cpp in Sources */,
+				A82887F71F12784E002DB1CF /* server.c in Sources */,
+				A82888001F1280E1002DB1CF /* method.c in Sources */,
 				A8B8531C1EDB4B8B00F86323 /* alglibinternal.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

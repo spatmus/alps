@@ -13,7 +13,7 @@
 #include "../alglib/src/fasttransforms.h"
 #include "portaudio.h"
 #include "sndfile.h"
-#include "lo.h"
+#include "../lo/lo.h"
 
 #define PA_SAMPLE_TYPE  paFloat32
 typedef float SAMPLE;
@@ -138,7 +138,7 @@ int main(int argc, const char * argv[]) {
                     compute();
                     if (i)
                     {
-                        report();
+                        report(t);
                     }
 
                     int cnt = 0;
