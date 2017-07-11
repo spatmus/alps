@@ -207,6 +207,7 @@ void loadConfiguration(const char *cfg)
         char buf[1000];
         while (fgets(buf, sizeof(buf), f))
         {
+//            cout << buf;
             char * p = strtok(buf, "=");
             if (!strcmp(p, "duration"))
             {
@@ -217,6 +218,11 @@ void loadConfiguration(const char *cfg)
             {
                 fade = atof(strtok(0, "\r\n"));
                 cout << "fade " << fade << endl;
+            }
+            else if (!strcmp(p, "file"))
+            {
+                fname = strdup(strtok(0, "\r\n"));
+                cout << "file name " << fname << endl;
             }
             else if (!strcmp(p, "inputs"))
             {
