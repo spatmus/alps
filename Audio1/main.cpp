@@ -18,14 +18,20 @@
 #define PA_SAMPLE_TYPE  paFloat32
 typedef float SAMPLE;
 
-#define DURATION    0.4
+// TODO
+// 1. The values defined below should be read from a configuration file
+// 2. Add a check that reference channel is connected properly (the first speaker output connected to the last input)
+// 3. Add a signal quality check as a ratio between the highest and the lowest RMS of parts of input signals
+
+#define DURATION    0.2
 #define FADE_PART   0.2
 #define MAX_OUTPUTS 16
+#define MAX_INPUTS  16
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
 #define REPEAT      50
 #define EXTRA_PLAY  20
-#define OSC_IP      "192.168.1.7" 
+#define OSC_IP      "192.168.1.4"
 #define OSC_PORT    "7770"
 
 //const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
@@ -34,10 +40,10 @@ const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2
 
 // speaker coordinates x,y
 float xy[][3] = {
-    {0, 0, 0.8},
-    {1.2, 0, 0.8},
-    {1, 1},
-    {0, 1},
+    {0, 0, 0},
+    {1.2, 0, 0},
+    {7, 88},
+    {0, 17},
     {2, 0},
     {2, 2},
     {0, 2},
@@ -60,7 +66,7 @@ struct SoundData {
 SoundData sd = {0, 0, 0, NULL, NULL};
 
 // the measurement result
-int delays[MAX_OUTPUTS][ADC_INPUTS];
+int delays[MAX_OUTPUTS][MAX_INPUTS];
 
 
 /* This routine will be called by the PortAudio engine when audio is needed.
@@ -105,24 +111,37 @@ bool selectDevices(int *inDev, int *outDev);
 bool openStream(int inDev, int outDev, PaStream **stream);
 void compute();
 void report(lo_address t);
+void loadConfiguration(const char *cfg);
+float quality(int input);
+
+// values loaded from configuration file
+float duration = DURATION;
+float fade = FADE_PART;
+int inputs = ADC_INPUTS;
+int repeat = REPEAT;
+int extraPlay = EXTRA_PLAY;
+const char * oscIP = OSC_IP;
+const char * oscPort = OSC_PORT;
+const char * adcIn = "Built-in";
+const char * adcOut = "Built-in";
 
 int main(int argc, const char * argv[]) {
     if (argc > 1)
     {
-        fname = argv[1];
+        loadConfiguration(argv[1]);
     }
     
     int inDev = -1, outDev = -1;
     if (loadWave(fname))
     {
-        float duration = (float)sd.sfInfo.frames / SAMPLE_RATE;
-        if (duration > DURATION)
+        float dur = (float)sd.sfInfo.frames / SAMPLE_RATE;
+        if (dur > duration)
         {
-            duration = DURATION;
+            dur = duration;
         }
         sd.sfInfo.frames = duration * SAMPLE_RATE;
         sd.szOut = sd.sfInfo.frames * sd.sfInfo.channels;
-        sd.szIn = sd.sfInfo.frames * ADC_INPUTS;
+        sd.szIn = sd.sfInfo.frames * inputs;
         fadeInOut();
         
         PaError err = Pa_Initialize();
@@ -131,8 +150,8 @@ int main(int argc, const char * argv[]) {
             PaStream *stream = 0;
             if (selectDevices(&inDev, &outDev) && openStream(inDev, outDev, &stream))
             {
-                lo_address t = lo_address_new(OSC_IP, OSC_PORT);
-                for (int i = 0; i < REPEAT; i++)
+                lo_address t = lo_address_new(oscIP, oscPort);
+                for (int i = 0; i < repeat; i++)
                 {
                     cout << "run " << (i + 1) << endl;
                     compute();
@@ -177,6 +196,65 @@ int main(int argc, const char * argv[]) {
     }
     
     return 0;
+}
+
+void loadConfiguration(const char *cfg)
+{
+    FILE *f = fopen(cfg, "rt");
+    if (f)
+    {
+        char buf[1000];
+        while (fgets(buf, sizeof(buf), f))
+        {
+            char * p = strtok(buf, "=");
+            if (!strcmp(p, "duration"))
+            {
+                duration = atof(strtok(0, "\r\n"));
+                cout << "duration " << duration << endl;
+            }
+            else if (!strcmp(p, "fade"))
+            {
+                fade = atof(strtok(0, "\r\n"));
+                cout << "fade " << fade << endl;
+            }
+            else if (!strcmp(p, "inputs"))
+            {
+                inputs = atoi(strtok(0, "\r\n"));
+                cout << "inputs " << inputs << endl;
+            }
+            else if (!strcmp(p, "repeat"))
+            {
+                repeat = atoi(strtok(0, "\r\n"));
+                cout << "repeat " << repeat << endl;
+            }
+            else if (!strcmp(p, "extraPlay"))
+            {
+                extraPlay = atoi(strtok(0, "\r\n"));
+                cout << "extraPlay " << extraPlay << endl;
+            }
+            else if (!strcmp(p, "oscIP"))
+            {
+                oscIP = strdup(strtok(0, "\r\n"));
+                cout << "oscIP " << oscIP << endl;
+            }
+            else if (!strcmp(p, "oscPort"))
+            {
+                oscPort = strdup(strtok(0, "\r\n"));
+                cout << "oscPort " << oscPort << endl;
+            }
+            else if (!strcmp(p, "adcIn"))
+            {
+                adcIn = strdup(strtok(0, "\r\n"));
+                cout << "adcIn " << adcIn << endl;
+            }
+            else if (!strcmp(p, "adcOut"))
+            {
+                adcOut = strdup(strtok(0, "\r\n"));
+                cout << "adcOut " << adcOut << endl;
+            }
+        }
+        fclose(f);
+    }
 }
 
 int selectFromList(int numDevices, bool inp)
@@ -245,7 +323,7 @@ bool openStream(int inDev, int outDev, PaStream **stream)
 {
     PaStreamParameters inPars;
     inPars.device = inDev;
-    inPars.channelCount = ADC_INPUTS; // sd.sfInfo.channels;
+    inPars.channelCount = inputs; // sd.sfInfo.channels;
     inPars.sampleFormat = PA_SAMPLE_TYPE;
     inPars.hostApiSpecificStreamInfo = NULL;
     inPars.suggestedLatency = 0.1;
@@ -255,7 +333,7 @@ bool openStream(int inDev, int outDev, PaStream **stream)
     outPars.channelCount = sd.sfInfo.channels;
     
     sd.ptr = 0;
-    sd.empty = EXTRA_PLAY;
+    sd.empty = extraPlay;
     
     /* Open an audio I/O stream. */
     PaError err = Pa_OpenStream( stream,
@@ -300,7 +378,7 @@ void xcorr(int refChannel, int sigChannel, SAMPLE * res)
     for (int i = 0; i < sz; i++)
     {
         x[i] = sd.ping[i * ch + refChannel];
-        y[i] = sd.bang[i * ADC_INPUTS + sigChannel];
+        y[i] = sd.bang[i * inputs + sigChannel];
     }
     
     alglib::corrr1dcircular(y, sz, x, sz, r);
@@ -334,7 +412,7 @@ void compute()
     SAMPLE *res = new SAMPLE[sd.sfInfo.frames];
     for (int n = 0; n < num; n++)
     {
-        int inps = (n == num - 1) ? ADC_INPUTS - 1 : ADC_INPUTS;
+        int inps = (n == num - 1) ? inputs - 1 : inputs;
         for (int inp = 0; inp < inps; inp++)
         {
             xcorr(n, inp, res);
@@ -345,10 +423,10 @@ void compute()
     
     // The last input channel is used for latency correction.
     // It is electrically connected to the first output.
-    int md = delays[0][ADC_INPUTS - 1];
+    int md = delays[0][inputs - 1];
     for (int n = 0; n < num; n++)
     {
-        for (int inp = 0; inp < ADC_INPUTS; inp++)
+        for (int inp = 0; inp < inputs; inp++)
         {
             delays[n][inp] -= md;
         }
@@ -410,7 +488,7 @@ void report(lo_address t)
 {
     int num = sd.sfInfo.channels; // output channels
     // for all microphones
-    for (int inp = 0; inp < ADC_INPUTS - 1; inp++)
+    for (int inp = 0; inp < inputs - 1; inp++)
     {
         float X = 0, Y = 0;
         int averNum = 0;
@@ -420,7 +498,7 @@ void report(lo_address t)
         {
             float d1 = (float)delays[n][inp] / SAMPLE_RATE * 330;
             if (!d1) continue;
-            d1 = pythagor(d1, xy[2][n]);
+            d1 = pythagor(d1, xy[n][2]);
             cout << "speaker: " << n << " dist: " << d1 << endl;
             
             // for all pairs of speakers
@@ -428,7 +506,7 @@ void report(lo_address t)
             {
                 float d2 = (float)delays[m][inp] / SAMPLE_RATE * 330;
                 if (!d2) continue;
-                d2 = pythagor(d2, xy[2][m]);
+                d2 = pythagor(d2, xy[m][2]);
                 
                 float x, y;
                 if (distToXY(d1, d2, n, m, &x, &y))
@@ -493,8 +571,8 @@ bool loadWave(const char *fname)
     }
     
     sd.ping = new SAMPLE [sd.szOut = sd.sfInfo.frames * sd.sfInfo.channels];
-    sd.pong = new SAMPLE [sd.szIn = sd.sfInfo.frames * ADC_INPUTS];
-    sd.bang = new SAMPLE [sd.szIn = sd.sfInfo.frames * ADC_INPUTS];
+    sd.pong = new SAMPLE [sd.szIn = sd.sfInfo.frames * inputs];
+    sd.bang = new SAMPLE [sd.szIn = sd.sfInfo.frames * inputs];
     memset(sd.pong, 0, sd.szIn * sizeof(SAMPLE));
     memset(sd.bang, 0, sd.szIn * sizeof(SAMPLE));
     
@@ -513,7 +591,7 @@ bool loadWave(const char *fname)
 void fadeInOut()
 {
     long last = sd.szOut - 1;
-    int fdCnt = FADE_PART * sd.szOut;
+    int fdCnt = fade * sd.szOut;
     for (long i = 0; i < fdCnt; i++)
     {
         float v = (float) i / fdCnt;
