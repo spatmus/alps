@@ -203,6 +203,7 @@ void loadConfiguration(const char *cfg)
     FILE *f = fopen(cfg, "rt");
     if (f)
     {
+        cout << "----- Using configuration " << cfg << endl;
         char buf[1000];
         while (fgets(buf, sizeof(buf), f))
         {
@@ -253,6 +254,7 @@ void loadConfiguration(const char *cfg)
                 cout << "adcOut " << adcOut << endl;
             }
         }
+        cout << "-----" << endl;
         fclose(f);
     }
 }
@@ -262,13 +264,18 @@ int selectFromList(int numDevices, bool inp)
     int cnt = 0;
     const int MAX_DEV = 20;
     int idxs[MAX_DEV];
-    for(int i=0; i<numDevices; i++ ) {
+    for(int i = 0; i < numDevices; i++) {
         const PaDeviceInfo *deviceInfo = Pa_GetDeviceInfo( i );
         int num = inp ? deviceInfo->maxInputChannels : deviceInfo->maxOutputChannels;
         if (num) {
             idxs[cnt] = i;
             cnt++;
             cout << cnt << " " << deviceInfo->name << endl;
+            if (strstr(deviceInfo->name, inp ? adcIn : adcOut))
+            {
+                cout << "Used per configuration" << endl;
+                return i;
+            }
         }
     }
     switch (cnt) {
