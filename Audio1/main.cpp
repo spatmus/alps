@@ -39,7 +39,7 @@ const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2
 // const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/4ch.wav";
 
 // speaker coordinates x,y
-float xy[][3] = {
+float xy[MAX_OUTPUTS][3] = {
     {0, 0, 0},
     {1.2, 0, 0},
     {7, 88},
@@ -143,6 +143,11 @@ int main(int argc, const char * argv[]) {
         sd.szOut = sd.sfInfo.frames * sd.sfInfo.channels;
         sd.szIn = sd.sfInfo.frames * inputs;
         fadeInOut();
+        for (int i = 0; i < sd.sfInfo.channels; i++)
+        {
+            cout << "[" << xy[i][0] << ", " << xy[i][1] << ", " << xy[i][2] << "]" << endl;
+        }
+        cout << "-----" << endl;
         
         PaError err = Pa_Initialize();
         if( err == paNoError )
@@ -258,6 +263,28 @@ void loadConfiguration(const char *cfg)
             {
                 adcOut = strdup(strtok(0, "\r\n"));
                 cout << "adcOut " << adcOut << endl;
+            }
+            else if (!strncmp(p, "speaker", 7))
+            {
+                int spNum = atoi(p + 7);
+                if (spNum > 0 && spNum <= MAX_OUTPUTS)
+                {
+                    p = strtok(0, "\r\n");
+                    int idx = spNum - 1;
+                    int n = sscanf(p, "%g,%g,%g", &xy[idx][0], &xy[idx][1], &xy[idx][2]);
+                    if (n == 3)
+                    {
+//                        cout << xy[idx][0] << " " << xy[idx][1] << " " << xy[idx][2] << endl;
+                    }
+                    else
+                    {
+                        cout << "speaker " << spNum << ": IGNORED " << p << endl;
+                    }
+                }
+                else
+                {
+                    cout << "IGNORED " << p << endl;
+                }
             }
         }
         cout << "-----" << endl;
