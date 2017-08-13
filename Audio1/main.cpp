@@ -50,6 +50,8 @@ float xy[MAX_OUTPUTS][3] = {
     {3, 3}
 };
 
+bool debug = false;
+
 using namespace std;
 
 struct SoundData {
@@ -158,7 +160,7 @@ int main(int argc, const char * argv[]) {
                 lo_address t = lo_address_new(oscIP, oscPort);
                 for (int i = 0; i < repeat; i++)
                 {
-                    cout << "run " << (i + 1) << endl;
+                    if (debug) cout << "run " << (i + 1) << endl;
                     compute();
                     if (i)
                     {
@@ -172,7 +174,7 @@ int main(int argc, const char * argv[]) {
                         ++cnt;
                         Pa_Sleep(10);
                     }
-                    cout << "counter=" << cnt << endl;
+                    if (debug) cout << "counter=" << cnt << endl;
                     sd.ptr = 0;
                     sd.empty = EXTRA_PLAY;
                 }
@@ -263,6 +265,11 @@ void loadConfiguration(const char *cfg)
             {
                 adcOut = strdup(strtok(0, "\r\n"));
                 cout << "adcOut " << adcOut << endl;
+            }
+            else if (!strcmp(p, "debug"))
+            {
+                debug = atoi(strtok(0, "\r\n")) != 0;
+                cout << "debug " << debug << endl;
             }
             else if (!strncmp(p, "speaker", 7))
             {
@@ -516,9 +523,9 @@ bool distToXY(float d1, float d2, int n, int m, float *x, float *y)
 
 double pythagor(double d, double z)
 {
-    if (d < z)
+    if (fabs(d) < fabs(z))
     {
-        cout << "pythagor error " << d << " < " << z << endl;
+        if (debug) cout << "pythagor error " << d << " < " << z << endl;
         return 0;
     }
     return sqrt(d * d - z * z);
@@ -539,7 +546,7 @@ void report(lo_address t)
             float d1 = (float)delays[n][inp] / SAMPLE_RATE * 330;
             if (!d1) continue;
             d1 = pythagor(d1, xy[n][2]);
-            cout << "speaker: " << n << " dist: " << d1 << endl;
+            if (debug) cout << "speaker: " << n << " dist: " << d1 << endl;
             
             // for all pairs of speakers
             for (int m = n + 1; m < num; m++)
@@ -551,14 +558,14 @@ void report(lo_address t)
                 float x, y;
                 if (distToXY(d1, d2, n, m, &x, &y))
                 {
-                    cout << "x: " << x << " y: " << y << endl;
+                    cout << "speakers (" << n << "," << m << ") dist (" << d1 << "," << d2 << ") x: " << x << " y: " << y << endl;
                     X += x;
                     Y += y;
                     averNum++;
                 }
                 else
                 {
-                    cout << "no result" << endl;
+                    if (debug) cout << "no result" << endl;
                 }
             }
         }
@@ -567,7 +574,7 @@ void report(lo_address t)
             X /= averNum;
             Y /= averNum;
             cout << "position estimate for mic " << inp <<
-                " x=" << X << " y=" << Y << endl;
+                " x=" << X << " y=" << Y << " (" << averNum << ")" << endl;
 
             char lbl[40];
             sprintf(lbl, "/position%d", inp + 1);
@@ -578,13 +585,15 @@ void report(lo_address t)
         }
         else
         {
-            cout << "no estimate for mic " << inp << endl;
+            cout << "no estimates for mic " << inp << endl;
         }
     }
 }
 
+
 void saveWave(const char *fname)
 {
+    sd.sfInfo.channels = ADC_INPUTS;
     SNDFILE* f = sf_open(fname, SFM_WRITE, &sd.sfInfo);
     if (!f) {
         cout << "sfWriteFile(): couldn't open \"" << fname << "\"" << endl;
