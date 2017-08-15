@@ -23,8 +23,7 @@ typedef float SAMPLE;
 // 2. Add a check that reference channel is connected properly (the first speaker output connected to the last input)
 // 3. Add a signal quality check as a ratio between the highest and the lowest RMS of parts of input signals
 
-#define DURATION    0.2
-#define FADE_PART   0.2
+#define DURATION    0.5
 #define MAX_OUTPUTS 16
 #define MAX_INPUTS  16
 #define ADC_INPUTS  2
@@ -37,6 +36,8 @@ typedef float SAMPLE;
 //const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
 const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
 // const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/4ch.wav";
+const char *recname = "record.wav";
+const char *pulsename = "pulses.wav";
 
 // speaker coordinates x,y
 float xy[MAX_OUTPUTS][3] = {
@@ -49,8 +50,6 @@ float xy[MAX_OUTPUTS][3] = {
     {0, 2},
     {3, 3}
 };
-
-bool debug = false;
 
 using namespace std;
 
@@ -107,8 +106,8 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
 }
 
 bool loadWave(const char *fname);
-void fadeInOut();
-void saveWave(const char *fname);
+void fadeInOutEx();
+void saveWave(const char *fname, bool bang);
 bool selectDevices(int *inDev, int *outDev);
 bool openStream(int inDev, int outDev, PaStream **stream);
 void compute();
@@ -118,7 +117,13 @@ float quality(int input);
 
 // values loaded from configuration file
 float duration = DURATION;
-float fade = FADE_PART;
+// values in milliseconds for advanced fading
+float fadems = 5;    // fade in and fade out in each pulse
+float pausems = 10;  // pause between pulses
+float pulsems = 40;  // pulse duration
+float offsets[MAX_OUTPUTS] = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150};
+int pulsenumber = 5;
+
 int inputs = ADC_INPUTS;
 int repeat = REPEAT;
 int extraPlay = EXTRA_PLAY;
@@ -127,11 +132,12 @@ const char * oscPort = OSC_PORT;
 const char * adcIn = "Built-in";
 const char * adcOut = "Built-in";
 
-int main(int argc, const char * argv[]) {
-    if (argc > 1)
-    {
-        loadConfiguration(argv[1]);
-    }
+bool debug = false;
+
+
+int main(int argc, const char * argv[])
+{
+    loadConfiguration(argc > 1 ? argv[1] : 0);
     
     int inDev = -1, outDev = -1;
     if (loadWave(fname))
@@ -144,7 +150,7 @@ int main(int argc, const char * argv[]) {
         sd.sfInfo.frames = duration * SAMPLE_RATE;
         sd.szOut = sd.sfInfo.frames * sd.sfInfo.channels;
         sd.szIn = sd.sfInfo.frames * inputs;
-        fadeInOut();
+        fadeInOutEx();
         for (int i = 0; i < sd.sfInfo.channels; i++)
         {
             cout << "[" << xy[i][0] << ", " << xy[i][1] << ", " << xy[i][2] << "]" << endl;
@@ -180,7 +186,8 @@ int main(int argc, const char * argv[]) {
                 }
                 Pa_StopStream(stream);
                 Pa_CloseStream(stream);
-                saveWave("record.wav");
+                saveWave(pulsename, false);
+                saveWave(recname, true);
             }
         }
         else
@@ -207,7 +214,7 @@ int main(int argc, const char * argv[]) {
 
 void loadConfiguration(const char *cfg)
 {
-    FILE *f = fopen(cfg, "rt");
+    FILE *f = cfg ? fopen(cfg, "rt") : 0;
     if (f)
     {
         cout << "----- Using configuration " << cfg << endl;
@@ -221,15 +228,20 @@ void loadConfiguration(const char *cfg)
                 duration = atof(strtok(0, "\r\n"));
                 cout << "duration " << duration << endl;
             }
-            else if (!strcmp(p, "fade"))
-            {
-                fade = atof(strtok(0, "\r\n"));
-                cout << "fade " << fade << endl;
-            }
             else if (!strcmp(p, "file"))
             {
                 fname = strdup(strtok(0, "\r\n"));
                 cout << "file name " << fname << endl;
+            }
+            else if (!strcmp(p, "recname"))
+            {
+                recname = strdup(strtok(0, "\r\n"));
+                cout << "record file name " << recname << endl;
+            }
+            else if (!strcmp(p, "pulsename"))
+            {
+                pulsename = strdup(strtok(0, "\r\n"));
+                cout << "file name " << pulsename << endl;
             }
             else if (!strcmp(p, "inputs"))
             {
@@ -271,6 +283,42 @@ void loadConfiguration(const char *cfg)
                 debug = atoi(strtok(0, "\r\n")) != 0;
                 cout << "debug " << debug << endl;
             }
+            else if (!strcmp(p, "fadems"))
+            {
+                fadems = atof(strtok(0, "\r\n"));
+                cout << "fadems " << fadems << endl;
+            }
+            else if (!strcmp(p, "pausems"))
+            {
+                pausems = atof(strtok(0, "\r\n"));
+                cout << "pausems " << pausems << endl;
+            }
+            else if (!strcmp(p, "pulsems"))
+            {
+                pulsems = atof(strtok(0, "\r\n"));
+                cout << "pulsems " << pulsems << endl;
+            }
+            else if (!strcmp(p, "pulsems"))
+            {
+                pulsems = atof(strtok(0, "\r\n"));
+                cout << "pulsems " << pulsems << endl;
+            }
+            else if (!strcmp(p, "pulsenumber"))
+            {
+                pulsenumber = atoi(strtok(0, "\r\n"));
+                cout << "pulsenumber " << pulsenumber << endl;
+            }
+            else if (!strcmp(p, "offsets"))
+            {
+                char * offs = strdup(strtok(0, "\r\n"));
+                char *p = strtok(offs, ", \r\n");
+                for (int i = 0; (i < MAX_OUTPUTS) && p; ++i, p = strtok(0, ", \r\n"))
+                {
+                    offsets[i] = atof(p);
+                    cout << "offset " << i << " " << offsets[i] << endl;
+                }
+                free(offs);
+            }
             else if (!strncmp(p, "speaker", 7))
             {
                 int spNum = atoi(p + 7);
@@ -294,8 +342,8 @@ void loadConfiguration(const char *cfg)
                 }
             }
         }
-        cout << "-----" << endl;
         fclose(f);
+        cout << "-----" << endl;
     }
 }
 
@@ -591,17 +639,21 @@ void report(lo_address t)
 }
 
 
-void saveWave(const char *fname)
+void saveWave(const char *fname, bool bang)
 {
-    sd.sfInfo.channels = ADC_INPUTS;
+    if (bang)
+    {
+        sd.sfInfo.channels = ADC_INPUTS;
+    }
+    long sz = bang ? sd.szIn : sd.szOut;
     SNDFILE* f = sf_open(fname, SFM_WRITE, &sd.sfInfo);
     if (!f) {
         cout << "sfWriteFile(): couldn't open \"" << fname << "\"" << endl;
     } else {
-        sf_count_t samples_written = sf_write_float(f, sd.bang, sd.szIn);
-        if (samples_written != (int)sd.szIn) {
+        sf_count_t samples_written = sf_write_float(f, bang ? sd.bang : sd.ping, sz);
+        if (samples_written != (int)sz) {
             cout << "saveWave(): written " << samples_written << " float samples, expected "
-            << sd.szIn << " to \"" << fname << "\"" << endl;
+            << sz << " to \"" << fname << "\"" << endl;
         }
         sf_close(f);
     }
@@ -637,14 +689,61 @@ bool loadWave(const char *fname)
     return true;
 }
 
-void fadeInOut()
+static void zeroChannel(int ch, long from, long to)
 {
-    long last = sd.szOut - 1;
-    int fdCnt = fade * sd.szOut;
-    for (long i = 0; i < fdCnt; i++)
+    int nch = sd.sfInfo.channels;
+    for (long i = from, idx = ch + nch * from; i < to; i++, idx += nch)
     {
-        float v = (float) i / fdCnt;
-        sd.ping[i] *= v;
-        sd.ping[last - i] *= v;
+        sd.ping[idx] = 0;
+    }
+}
+
+static void pulseChannel(int ch, long fade, long from, long to)
+{
+    int nch = sd.sfInfo.channels;
+    for (long i = 0, idx1 = ch + nch * from, idx2 = nch * to + ch; i < fade;
+         i++, idx1 += nch, idx2 -= nch)
+    {
+        float v = (float) i / fade;
+        sd.ping[idx1] *= v;
+        sd.ping[idx2] *= v;
+    }
+}
+
+void fadeInOutEx()
+{
+    // check if parameters make sense
+    if (fadems * 2 > pulsems)
+    {
+        cout << "ERROR: fadems " << fadems << " is too big, should not be greater than pulsems " << pulsems << endl;
+        return;
+    }
+
+    int nch = sd.sfInfo.channels;
+    long pls = pulsems / 1000.0 * SAMPLE_RATE;
+    long pau = pausems / 1000.0 * SAMPLE_RATE;
+    long period = pls + pau;
+    long cnt = sd.sfInfo.frames;
+    for (int ch = 0; ch < nch; ch++)
+    {
+        long offset = offsets[ch] / 1000.0 * SAMPLE_RATE;
+        zeroChannel(ch, 0, offset);
+        
+        for (int i = 0; i < pulsenumber && offset < cnt; i++)
+        {
+            if (debug) cout << "ch " << ch << " pls " << i << " offset " << offset << endl;
+            long end = offset + pls;
+            if (end >= cnt) end = cnt - 1;
+            pulseChannel(ch, fadems / 1000.0 * SAMPLE_RATE, offset, end);
+            long end2 = end + pau;
+            if (end2 >= cnt) end2 = cnt - 1;
+            zeroChannel(ch, end, end2);
+            offset += period;
+        }
+        
+        if (offset < cnt)
+        {
+            zeroChannel(ch, offset, cnt - 1);
+        }
     }
 }
