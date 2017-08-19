@@ -28,7 +28,7 @@ typedef float SAMPLE;
 #define MAX_INPUTS  16
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
-#define REPEAT      50
+#define REPEAT      20
 #define EXTRA_PLAY  20
 #define OSC_IP      "192.168.1.4"
 #define OSC_PORT    "7770"
@@ -147,7 +147,7 @@ int main(int argc, const char * argv[])
         {
             dur = duration;
         }
-        sd.sfInfo.frames = duration * SAMPLE_RATE;
+        sd.sfInfo.frames = dur * SAMPLE_RATE;
         sd.szOut = sd.sfInfo.frames * sd.sfInfo.channels;
         sd.szIn = sd.sfInfo.frames * inputs;
         fadeInOutEx();
@@ -728,12 +728,16 @@ void fadeInOutEx()
     {
         long offset = offsets[ch] / 1000.0 * SAMPLE_RATE;
         zeroChannel(ch, 0, offset);
+
+        if (debug)
+            cout << "pulse " << pls << " pause " << pau << " ofs " << offset << endl;
         
         for (int i = 0; i < pulsenumber && offset < cnt; i++)
         {
-            if (debug) cout << "ch " << ch << " pls " << i << " offset " << offset << endl;
             long end = offset + pls;
             if (end >= cnt) end = cnt - 1;
+            if (debug)
+                cout << "ch " << ch << " pls " << i << " ofs " << offset << " end " << end << endl;
             pulseChannel(ch, fadems / 1000.0 * SAMPLE_RATE, offset, end);
             long end2 = end + pau;
             if (end2 >= cnt) end2 = cnt - 1;
