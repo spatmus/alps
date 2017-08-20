@@ -186,8 +186,11 @@ int main(int argc, const char * argv[])
                 }
                 Pa_StopStream(stream);
                 Pa_CloseStream(stream);
-                saveWave(pulsename, false);
-                saveWave(recname, true);
+                if (debug)
+                {
+                    saveWave(pulsename, false);
+                    saveWave(recname, true);
+                }
             }
         }
         else
