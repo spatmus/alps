@@ -325,10 +325,10 @@ void loadConfiguration(const char *cfg)
             else if (!strncmp(p, "speaker", 7))
             {
                 int spNum = atoi(p + 7);
-                if (spNum > 0 && spNum <= MAX_OUTPUTS)
+                if (spNum >= 0 && spNum < MAX_OUTPUTS)
                 {
                     p = strtok(0, "\r\n");
-                    int idx = spNum - 1;
+                    int idx = spNum;
                     int n = sscanf(p, "%g,%g,%g", &xy[idx][0], &xy[idx][1], &xy[idx][2]);
                     if (n == 3)
                     {
@@ -537,8 +537,9 @@ void compute()
 // located at 0,0 and L,0
 bool distToXY(float d1, float d2, float L, float *x, float *y)
 {
+    if (!L) return false;
     *x = (d1 * d1 + L * L - d2 * d2) / 2 / L;
-    if (d1 >= *x)
+    if (d1 >= fabs(*x))
     {
         *y = sqrt(d1 * d1 - *x * *x);
         return true;
@@ -557,6 +558,8 @@ bool distToXY(float d1, float d2, int n, int m, float *x, float *y)
     float y2 = xy[m][1];
     float dx = x2 - x1;
     float dy = y2 - y1;
+    cout << dx << " " << dy << " " << endl;
+    if (!dx && !dy) return false;
     float L = sqrtf(dx * dx + dy * dy);
     float a = atan2f(dy, dx);
     float X, Y;
@@ -566,6 +569,7 @@ bool distToXY(float d1, float d2, int n, int m, float *x, float *y)
         float co = cosf(a);
         *x = x1 + X * co - Y * si;
         *y = y1 + X * si + Y * co;
+        cout << X << " " << Y << " a " << a << " si " << si << " co " << co << endl;
         return true;
     }
     
@@ -743,14 +747,14 @@ void fadeInOutEx()
                 cout << "ch " << ch << " pls " << i << " ofs " << offset << " end " << end << endl;
             pulseChannel(ch, fadems / 1000.0 * SAMPLE_RATE, offset, end);
             long end2 = end + pau;
-            if (end2 >= cnt) end2 = cnt - 1;
+            if (end2 > cnt) end2 = cnt;
             zeroChannel(ch, end, end2);
             offset += period;
         }
         
         if (offset < cnt)
         {
-            zeroChannel(ch, offset, cnt - 1);
+            zeroChannel(ch, offset, cnt);
         }
     }
 }
