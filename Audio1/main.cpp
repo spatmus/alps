@@ -42,13 +42,15 @@ const char *pulsename = "pulses.wav";
 // speaker coordinates x,y
 float xy[MAX_OUTPUTS][3] = {
     {0, 0, 0},
+    {0, 1, 0},
+    {0, 3, 0},
     {1.2, 0, 0},
-    {7, 88},
-    {0, 17},
-    {2, 0},
-    {2, 2},
-    {0, 2},
-    {3, 3}
+    {7, 88, 0},
+    {0, 17, 0},
+    {2, 0, 0},
+    {2, 2, 0},
+    {0, 2, 0},
+    {3, 3, 0}
 };
 
 // This is the last index of speakers position loaded from configuration
@@ -191,6 +193,11 @@ int main(int argc, const char * argv[])
     int inDev = -1, outDev = -1;
     if (loadWave(fname))
     {
+        if (sd.sfInfo.channels != lastSpeaker + 1)
+        {
+            cout << "WARNING Number of configured speakers " << lastSpeaker + 1 <<
+            " != " << sd.sfInfo.channels << endl;
+        }
         float dur = (float)sd.sfInfo.frames / SAMPLE_RATE;
         if (dur > duration)
         {
@@ -827,10 +834,8 @@ void findSpeakerPairs(vector<spair> &pairs)
         a.used = true;
         b.used = true;
         pairs.push_back(spair(a, b));
-        return;
     }
-
-    for (int i = 0; i < n; i++)
+    else for (int i = 0; i < n; i++)
     {
         speaker &a = cc[i];
 
