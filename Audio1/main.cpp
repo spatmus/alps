@@ -53,8 +53,9 @@ float xy[MAX_OUTPUTS][3] = {
 
 // This is the last index of speakers position loaded from configuration
 // It should match the number of channels in wav file
-int lastSpeaker = 0;
+int lastSpeaker = 1;
 
+// 2D projections of speakers are used to select usable pairs
 struct speaker
 {
     float x;
@@ -93,9 +94,11 @@ struct spair
     bool empty() { return one.x == two.x && one.y == two.y; };
 };
 
+using namespace std;
+
+vector<speaker> cc;
 vector<spair> speakers;
 
-using namespace std;
 
 struct SoundData {
     long        szIn;
@@ -183,7 +186,7 @@ bool debug = false;
 int main(int argc, const char * argv[])
 {
     loadConfiguration(argc > 1 ? argv[1] : 0);
-    findSpeakerPairs(pairs);
+    findSpeakerPairs(speakers);
 
     int inDev = -1, outDev = -1;
     if (loadWave(fname))
@@ -642,10 +645,15 @@ void report(lo_address t)
         int averNum = 0;
         cout << "input:" << inp << endl;
         // for all speaker pairs
-        for (int i = 0; i < pairs.size(); i++)
+        for (int i = 0; i < speakers.size(); i++)
         {
-            int n = pairs[i].one;
-            int m = pairs[i].two;
+            int n = speakers[i].one.id;
+            int m = speakers[i].two.id;
+            if (n >= sd.sfInfo.channels || m >= sd.sfInfo.channels)
+            {
+                cout << "ERROR: The speaker pair (" << n << "," << m << ") cannot be used" << endl;
+                continue;
+            }
             float d1 = (float)delays[n][inp] / SAMPLE_RATE * 330;
             if (!d1) continue;
             d1 = pythagor(d1, xy[n][2]);
@@ -806,24 +814,33 @@ void findSpeakerPairs(vector<spair> &pairs)
 {
     int n = lastSpeaker + 1;
 
-    vector<speaker> cc;
     for (int i = 0; i < n; i++)
     {
-        cc.push_back(speaker(xy[i].x, xy[i].y));
+        cc.push_back(speaker(xy[i][0], xy[i][1]));
+        cc[i].id = i;
+    }
+
+    if (n == 2)
+    {
+        speaker &a = cc[0];
+        speaker &b = cc[1];
+        a.used = true;
+        b.used = true;
+        pairs.push_back(spair(a, b));
+        return;
     }
 
     for (int i = 0; i < n; i++)
     {
         speaker &a = cc[i];
-        a.id = i;
 
-        for (int j=0; j<n; j++) if (i != j)
+        for (int j = 0; j < n; j++) if (i != j)
         {
             speaker &b = cc[j];
             spair pr(a, b);
             if (pr.empty())
             {
-               cout << "Two speakers at the same position: " << i << " " << j << endl;
+               cout << "ERROR Two speakers at the same position: " << i << " " << j << endl;
                continue;
             }
 
@@ -851,10 +868,10 @@ void findSpeakerPairs(vector<spair> &pairs)
     cout << "PAIRS" << endl;
     for (int i = 0; i < (int)pairs.size(); i++)
     {
-        speaker a = pairs[i].one;
-        speaker b = pairs[i].two;
-        cout << i << " [" << a.id << "] (" << a.x << "," << a.y ") ["
-            << b.id << "] (" << b.x << "," << b.y ")" << endl;
+        speaker &a = pairs[i].one;
+        speaker &b = pairs[i].two;
+        cout << i << " [" << a.id << "] (" << a.x << "," << a.y << ") ["
+            << b.id << "] (" << b.x << "," << b.y << ")" << endl;
     }
 
     for (int i = 0; i < n; i++)
@@ -862,7 +879,7 @@ void findSpeakerPairs(vector<spair> &pairs)
         speaker a = cc[i];
         if (!a.used)
         {
-            cout << "NOT USED [" << i << "] (" << a.x << "," << a.y << ") << endl";
+            cout << "NOT USED [" << i << "] (" << a.x << "," << a.y << ")" << endl;
         }
     }
 }
