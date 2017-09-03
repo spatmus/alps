@@ -19,7 +19,7 @@
 typedef float SAMPLE;
 
 // TODO
-// 1. The values defined below should be read from a configuration file
+// 1. The values defined below should be read from a configuration file -- Done
 // 2. Add a check that reference channel is connected properly (the first speaker output connected to the last input)
 // 3. Add a signal quality check as a ratio between the highest and the lowest RMS of parts of input signals
 
@@ -43,8 +43,8 @@ const char *pulsename = "pulses.wav";
 float xy[MAX_OUTPUTS][3] = {
     {0, 0, 0},
     {0, 1, 0},
-    {0, 3, 0},
-    {1.2, 0, 0},
+    {1, 3, 0},
+    {0.3, 1, 0},
     {7, 88, 0},
     {0, 17, 0},
     {2, 0, 0},
@@ -55,7 +55,7 @@ float xy[MAX_OUTPUTS][3] = {
 
 // This is the last index of speakers position loaded from configuration
 // It should match the number of channels in wav file
-int lastSpeaker = 1;
+int lastSpeaker = 3;
 
 // 2D projections of speakers are used to select usable pairs
 struct speaker
@@ -74,6 +74,7 @@ struct speaker
     }
 
     speaker operator - (speaker &s) { return speaker(x - s.x, y- s.y); }
+    int operator == (speaker &s) { return (x == s.x) && (y == s.y); }
 };
 
 struct spair
@@ -94,6 +95,7 @@ struct spair
 
     // both speakers are at the same position so it's not a pair
     bool empty() { return one.x == two.x && one.y == two.y; };
+    bool exchanged(spair &other) { return one == other.two && two == other.one; };
 };
 
 using namespace std;
@@ -827,15 +829,7 @@ void findSpeakerPairs(vector<spair> &pairs)
         cc[i].id = i;
     }
 
-    if (n == 2)
-    {
-        speaker &a = cc[0];
-        speaker &b = cc[1];
-        a.used = true;
-        b.used = true;
-        pairs.push_back(spair(a, b));
-    }
-    else for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++)
     {
         speaker &a = cc[i];
 
@@ -869,9 +863,49 @@ void findSpeakerPairs(vector<spair> &pairs)
             }
         }
     }
+    
+    // if all speakers are aligned then reversed pairs exist
+    bool aligned = false;
+    int np = (int)pairs.size();
+    for (int i = 0; (i < np) && !aligned; i++)
+    {
+        spair &a = pairs[i];
+        for (int j = i + 1; j < np; j++)
+        {
+            spair &b = pairs[j];
+            if (b.exchanged(a))
+            {
+                aligned = true;
+                break;
+            }
+        }
+    }
+    
+    if (aligned)
+    {
+        cout << "ALIGNED SPEAKER PAIRS" << endl;
+        pairs.clear();
+        
+        for (int i = 0; i < n; i++)
+        {
+            speaker &a = cc[i];
+            for (int j = i + 1; j < n; j++)
+            {
+                speaker &b = cc[j];
+                a.used = true;
+                b.used = true;
+                pairs.push_back(spair(a, b));
+            }
+        }
 
-    cout << "PAIRS" << endl;
-    for (int i = 0; i < (int)pairs.size(); i++)
+        np = (int)pairs.size();
+    }
+    else
+    {
+        cout << "PAIRS" << endl;
+    }
+
+    for (int i = 0; i < np; i++)
     {
         speaker &a = pairs[i].one;
         speaker &b = pairs[i].two;
