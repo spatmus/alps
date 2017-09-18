@@ -64,7 +64,7 @@ int Pa_GetVersion( void );
 
  @deprecated As of 19.5.0, use Pa_GetVersionInfo()->versionText instead.
 */
-const char* Pa_GetVersionText( void ) __AVAILABILITY_INTERNAL_DEPRECATED;
+//const char* Pa_GetVersionText( void ) __AVAILABILITY_INTERNAL_DEPRECATED;
 
 /**
  Generate a packed integer version number in the same format used

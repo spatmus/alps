@@ -1,7 +1,7 @@
 appname := alPi
 
 CXX := g++
-CXXFLAGS := -std=c++11 -I. -lportaudio -lpthread
+CXXFLAGS := -std=c++11 -I. -lportaudio -lpthread -lsndfile
 CFLAGS := -I. -DHAVE_CONFIG_H -DSO
 
 srcfiles := $(shell find . -name "*.c*")
@@ -19,7 +19,7 @@ $(appname): $(objects)
 #	$(CXX) $(CXXFLAGS) -MM $^>>./.depend;
 
 clean:
-	rm -f $(objects)
+	rm -f $(shell find . -name "*.o")
 
 #dist-clean: clean
 #	rm -f *~ .depend
