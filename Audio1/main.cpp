@@ -55,7 +55,7 @@ float xy[MAX_OUTPUTS][3] = {
 
 // This is the last index of speakers position loaded from configuration
 // It should match the number of channels in wav file
-int lastSpeaker = 1; // the default is stereo 
+int lastSpeaker = 1; // the default is stereo
 
 // 2D projections of speakers are used to select usable pairs
 struct speaker
@@ -575,12 +575,15 @@ void compute()
             xcorr(n, inp, res);
             int idx = findMaxAbs(res, (int)sd.sfInfo.frames);
             delays[n][inp] = idx;
+            if (debug) cout << "speaker " << n << " mic " << inp << " idx " <<
+                idx << " val " << res[idx] << endl;
         }
     }
     
     // The last input channel is used for latency correction.
     // It is electrically connected to the first output.
     int md = delays[0][inputs - 1];
+    if (debug) cout << "reference delay " << md << endl;
     for (int n = 0; n < num; n++)
     {
         for (int inp = 0; inp < inputs; inp++)
