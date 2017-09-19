@@ -176,6 +176,8 @@ float pulsems = 40;  // pulse duration
 float offsets[MAX_OUTPUTS] = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150};
 int pulsenumber = 5;
 
+float maxdist = 100;
+
 int inputs = ADC_INPUTS;
 int repeat = REPEAT;
 int extraPlay = EXTRA_PLAY;
@@ -368,6 +370,11 @@ void loadConfiguration(const char *cfg)
             {
                 pulsenumber = atoi(strtok(0, "\r\n"));
                 cout << "pulsenumber " << pulsenumber << endl;
+            }
+            else if (!strcmp(p, "maxdist"))
+            {
+                maxdist = atof(strtok(0, "\r\n"));
+                cout << "maxdist " << maxdist << endl;
             }
             else if (!strcmp(p, "offsets"))
             {
@@ -648,6 +655,19 @@ double pythagor(double d, double z)
     return sqrt(d * d - z * z);
 }
 
+bool distOk(float &d, int n, float z)
+{
+    if (d <= 0) return false;
+    if (d > maxdist)
+    {
+        if (debug) cout << "speaker " << n << " is too far " << d << endl;
+        return false;
+    }
+    if (debug) cout << "speaker: " << n << " dist: " << d << endl;
+    d = pythagor(d, z);
+    return true;
+}
+
 void report(lo_address t)
 {
     // for all microphones
@@ -666,14 +686,12 @@ void report(lo_address t)
                 cout << "ERROR: The speaker pair (" << n << "," << m << ") cannot be used" << endl;
                 continue;
             }
+            
             float d1 = (float)delays[n][inp] / SAMPLE_RATE * 330;
-            if (!d1) continue;
-            d1 = pythagor(d1, xy[n][2]);
-            if (debug) cout << "speaker: " << n << " dist: " << d1 << endl;
+            if (!distOk(d1, n, xy[n][2])) continue;
             
             float d2 = (float)delays[m][inp] / SAMPLE_RATE * 330;
-            if (!d2) continue;
-            d2 = pythagor(d2, xy[m][2]);
+            if (!distOk(d2, m, xy[m][2])) continue;
 
             float x, y;
             if (distToXY(d1, d2, n, m, &x, &y))
