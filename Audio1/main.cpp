@@ -33,7 +33,6 @@ typedef float SAMPLE;
 #define OSC_IP      "192.168.1.4"
 #define OSC_PORT    "7770"
 
-//const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/alhambra.wav";
 const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/20kHz_noise2ch.wav";
 // const char *fname = "/Users/cmtuser/Desktop/xcodedocs/Audio1/Audio1/4ch.wav";
 const char *recname = "record.wav";
@@ -120,6 +119,7 @@ SoundData sd = {0, 0, 0, NULL, NULL};
 // the measurement result
 int delays[MAX_OUTPUTS][MAX_INPUTS];
 
+int inputs = ADC_INPUTS;
 
 /* This routine will be called by the PortAudio engine when audio is needed.
  It may be called at interrupt level on some machines so don't do anything
@@ -140,16 +140,16 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
             frames = framesPerBuffer;
         }
         long pOut = d.ptr * d.sfInfo.channels;
-        long pIn = d.ptr * ADC_INPUTS;
+        long pIn = d.ptr * inputs;
         memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * frames * d.sfInfo.channels);
-        memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * frames * ADC_INPUTS);
+        memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * frames * inputs);
         d.ptr += frames;
     }
     else
     {
         if (d.empty-- == EXTRA_PLAY)
         {
-            memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * ADC_INPUTS);
+            memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * inputs);
         }
         memset(outputBuffer, 0, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
     }
@@ -178,7 +178,6 @@ int pulsenumber = 5;
 
 float maxdist = 100;
 
-int inputs = ADC_INPUTS;
 int repeat = REPEAT;
 int extraPlay = EXTRA_PLAY;
 const char * oscIP = OSC_IP;
@@ -187,7 +186,8 @@ const char * adcIn = "Built-in";
 const char * adcOut = "Built-in";
 
 bool debug = false;
-
+int ref_out = 0;
+int ref_in = 0;
 
 int main(int argc, const char * argv[])
 {
@@ -216,7 +216,7 @@ int main(int argc, const char * argv[])
             cout << "[" << xy[i][0] << ", " << xy[i][1] << ", " << xy[i][2] << "]" << endl;
         }
         cout << "-----" << endl;
-        
+
         PaError err = Pa_Initialize();
         if( err == paNoError )
         {
@@ -266,12 +266,11 @@ int main(int argc, const char * argv[])
         sd.bang = 0;
         sd.szIn = 0;
         sd.szOut = 0;
-        
+
         err = Pa_Terminate();
         if( err != paNoError )
             printf(  "PortAudio error: %s\n", Pa_GetErrorText( err ) );
     }
-    
     return 0;
 }
 
@@ -335,6 +334,16 @@ void loadConfiguration(const char *cfg)
             {
                 adcIn = strdup(strtok(0, "\r\n"));
                 cout << "adcIn " << adcIn << endl;
+            }
+            else if (!strcmp(p, "refIn"))
+            {
+                ref_in = atoi(strtok(0, "\r\n"));
+                cout << "refIn " << ref_in << endl;
+            }
+            else if (!strcmp(p, "refOut"))
+            {
+                ref_out = atoi(strtok(0, "\r\n"));
+                cout << "refOut " << ref_out << endl;
             }
             else if (!strcmp(p, "adcOut"))
             {
@@ -438,11 +447,11 @@ int selectFromList(int numDevices, bool inp)
     switch (cnt) {
         case 0:
             return -1;
-            
+
         case 1:
             cout << " --- selected: " << Pa_GetDeviceInfo( idxs[0] )->name << endl;
             return idxs[0];
-            
+
         default:
             while (1) {
                 int val;
@@ -467,7 +476,6 @@ bool selectDevices(int *inDev, int *outDev)
         printf( "ERROR: Pa_CountDevices returned 0x%x\n", numDevices );
         return false;
     }
-    
     int i = selectFromList(numDevices, true);
     if (i < 0) {
         return false;
@@ -479,7 +487,6 @@ bool selectDevices(int *inDev, int *outDev)
         return false;
     }
     *outDev = i;
-    
     return true;
 }
 
@@ -491,20 +498,17 @@ bool openStream(int inDev, int outDev, PaStream **stream)
     inPars.sampleFormat = PA_SAMPLE_TYPE;
     inPars.hostApiSpecificStreamInfo = NULL;
     inPars.suggestedLatency = 0.1;
-    
     PaStreamParameters outPars = inPars;
     outPars.device = outDev;
     outPars.channelCount = sd.sfInfo.channels;
-    
     sd.ptr = 0;
     sd.empty = extraPlay;
-    
     /* Open an audio I/O stream. */
     PaError err = Pa_OpenStream( stream,
                                  &inPars,          /* no input channels */
                                  &outPars,          /* stereo output */
                                  SAMPLE_RATE,
-                                 256,        /* frames per buffer, i.e. the number
+                                 256,          /* frames per buffer, i.e. the number
                                                 of sample frames that PortAudio will
                                                 request from the callback. Many apps
                                                 may want to use
@@ -544,9 +548,7 @@ void xcorr(int refChannel, int sigChannel, SAMPLE * res)
         x[i] = sd.ping[i * ch + refChannel];
         y[i] = sd.bang[i * inputs + sigChannel];
     }
-    
     alglib::corrr1dcircular(y, sz, x, sz, r);
-    
     for (int i = 0; i < sz; i++)
     {
         res[i] = r[i];
@@ -576,8 +578,8 @@ void compute()
     SAMPLE *res = new SAMPLE[sd.sfInfo.frames];
     for (int n = 0; n < num; n++)
     {
-        int inps = (n == num - 1) ? inputs - 1 : inputs;
-        for (int inp = 0; inp < inps; inp++)
+        //int inps = (n == num - 1) ? inputs - 1 : inputs;
+        for (int inp = 0; inp < inputs; inp++)
         {
             xcorr(n, inp, res);
             int idx = findMaxAbs(res, (int)sd.sfInfo.frames);
@@ -586,10 +588,10 @@ void compute()
                 idx << " val " << res[idx] << endl;
         }
     }
-    
-    // The last input channel is used for latency correction.
-    // It is electrically connected to the first output.
-    int md = delays[0][inputs - 1];
+
+    // One input channel is used for latency correction.
+    // It is electrically connected to one output.
+    int md = delays[ref_out][ref_in];
     if (debug) cout << "reference delay " << md << endl;
     for (int n = 0; n < num; n++)
     {
@@ -598,7 +600,7 @@ void compute()
             delays[n][inp] -= md;
         }
     }
-    
+
     delete [] res;
 }
 
@@ -613,7 +615,6 @@ bool distToXY(float d1, float d2, float L, float *x, float *y)
         *y = sqrt(d1 * d1 - *x * *x);
         return true;
     }
-    
     return false;
 }
 
@@ -731,7 +732,7 @@ void saveWave(const char *fname, bool bang)
 {
     if (bang)
     {
-        sd.sfInfo.channels = ADC_INPUTS;
+        sd.sfInfo.channels = inputs;
     }
     long sz = bang ? sd.szIn : sd.szOut;
     SNDFILE* f = sf_open(fname, SFM_WRITE, &sd.sfInfo);
