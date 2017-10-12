@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <condition_variable>
+#include <mutex>
+#include <queue>
 #include "../alglib/src/fasttransforms.h"
 #include "portaudio.h"
 #include "sndfile.h"
@@ -17,6 +20,38 @@
 
 #define PA_SAMPLE_TYPE  paFloat32
 typedef float SAMPLE;
+
+// refer to https://juanchopanzacpp.wordpress.com/2013/02/26/concurrent-queue-c11/
+class BlockingQueue
+{
+    std::condition_variable cond;
+    std::mutex mtx;
+    std::queue<int> qu;
+    
+public:
+    
+    int pop()
+    {
+        std::unique_lock<std::mutex> lk(mtx);
+        while (qu.empty())
+        {
+            cond.wait(lk);
+        }
+        int v = qu.front();
+        qu.pop();
+        return v;
+    }
+    
+    void push(int v)
+    {
+        std::unique_lock<std::mutex> lk(mtx);
+        qu.push(v);
+        lk.unlock();
+        cond.notify_one();
+    }
+};
+
+BlockingQueue bq;
 
 // TODO
 // 1. The values defined below should be read from a configuration file -- Done
@@ -151,6 +186,10 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
         {
             memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * ADC_INPUTS);
         }
+        if (!d.empty)
+        {
+            bq.push(33);
+        }
         memset(outputBuffer, 0, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
     }
     return paContinue;
@@ -233,16 +272,11 @@ int main(int argc, const char * argv[])
                         report(t);
                     }
 
-                    int cnt = 0;
-                    /* wait until the entire signal has been played */
-                    while (sd.empty > 0)
-                    {
-                        ++cnt;
-                        Pa_Sleep(10);
-                    }
-                    if (debug) cout << "counter=" << cnt << endl;
-                    sd.ptr = 0;
+                    // wait until the end of playback
+                    int ch = bq.pop();
+                    if (debug) cout << "ready channel=" << ch << endl;
                     sd.empty = EXTRA_PLAY;
+                    sd.ptr = 0; // start the pulse again
                 }
                 Pa_StopStream(stream);
                 Pa_CloseStream(stream);
