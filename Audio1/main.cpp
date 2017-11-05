@@ -17,6 +17,14 @@
 #include "portaudio.h"
 #include "sndfile.h"
 #include "../lo/lo.h"
+#include <time.h>
+
+static long getmicros()
+{
+    timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+}
 
 #define PA_SAMPLE_TYPE  paFloat32
 typedef float SAMPLE;
@@ -265,17 +273,27 @@ int main(int argc, const char * argv[])
                 lo_address t = lo_address_new(oscIP, oscPort);
                 for (int i = 0; i < repeat; i++)
                 {
+                    long t0 = getmicros();
                     if (debug) cout << "run " << (i + 1) << endl;
                     compute();
+                    long t1 = getmicros();
                     if (i)
                     {
                         report(t);
                     }
-
+                    long t2 = getmicros();
                     // wait until the end of playback
                     int ch = bq.pop();
-                    if (debug) cout << "ready channel=" << ch << endl;
-                    sd.empty = EXTRA_PLAY;
+                    long t3 = getmicros();
+                    if (debug)
+                    {
+                        cout << "compute: " << (t1 - t0)
+                            << " report: " << (t2 - t1)
+                            << " wait: " << (t3 - t2)
+                            << " channel: " << ch
+                            << endl;
+                    }
+                    sd.empty = extraPlay;
                     sd.ptr = 0; // start the pulse again
                 }
                 Pa_StopStream(stream);
