@@ -27,6 +27,7 @@ static long getmicros()
 }
 
 #define PA_SAMPLE_TYPE  paFloat32
+#define DESIRED_LATENCY 0.01
 typedef float SAMPLE;
 
 // refer to https://juanchopanzacpp.wordpress.com/2013/02/26/concurrent-queue-c11/
@@ -72,7 +73,7 @@ BlockingQueue bq;
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
 #define REPEAT      20
-#define EXTRA_PLAY  20
+//#define EXTRA_PLAY  20
 #define OSC_IP      "192.168.1.4"
 #define OSC_PORT    "7770"
 
@@ -190,12 +191,13 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
     }
     else
     {
-        if (d.empty-- == EXTRA_PLAY)
+//        if (d.empty-- == EXTRA_PLAY)
+        {
+//            memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * inputs);
+        }
+//        if (!d.empty)
         {
             memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * inputs);
-        }
-        if (!d.empty)
-        {
             bq.push(33);
         }
         memset(outputBuffer, 0, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
@@ -226,7 +228,7 @@ int pulsenumber = 5;
 float maxdist = 100;
 
 int repeat = REPEAT;
-int extraPlay = EXTRA_PLAY;
+//int extraPlay = EXTRA_PLAY;
 const char * oscIP = OSC_IP;
 const char * oscPort = OSC_PORT;
 const char * adcIn = "Built-in";
@@ -275,7 +277,10 @@ int main(int argc, const char * argv[])
                 {
                     long t0 = getmicros();
                     if (debug) cout << "run " << (i + 1) << endl;
-                    compute();
+                    if (i)
+                    {
+                        compute();
+                    }
                     long t1 = getmicros();
                     if (i)
                     {
@@ -293,7 +298,7 @@ int main(int argc, const char * argv[])
                             << " channel: " << ch
                             << endl;
                     }
-                    sd.empty = extraPlay;
+//                    sd.empty = extraPlay;
                     sd.ptr = 0; // start the pulse again
                 }
                 Pa_StopStream(stream);
@@ -367,11 +372,11 @@ void loadConfiguration(const char *cfg)
                 repeat = atoi(strtok(0, "\r\n"));
                 cout << "repeat " << repeat << endl;
             }
-            else if (!strcmp(p, "extraPlay"))
-            {
-                extraPlay = atoi(strtok(0, "\r\n"));
-                cout << "extraPlay " << extraPlay << endl;
-            }
+//            else if (!strcmp(p, "extraPlay"))
+//            {
+//                extraPlay = atoi(strtok(0, "\r\n"));
+//                cout << "extraPlay " << extraPlay << endl;
+//            }
             else if (!strcmp(p, "oscIP"))
             {
                 oscIP = strdup(strtok(0, "\r\n"));
@@ -554,13 +559,13 @@ bool openStream(int inDev, int outDev, PaStream **stream)
     outPars.device = outDev;
     outPars.channelCount = sd.sfInfo.channels;
     sd.ptr = 0;
-    sd.empty = extraPlay;
+//    sd.empty = extraPlay;
     /* Open an audio I/O stream. */
     PaError err = Pa_OpenStream( stream,
                                  &inPars,          /* no input channels */
                                  &outPars,          /* stereo output */
                                  SAMPLE_RATE,
-                                 256,          /* frames per buffer, i.e. the number
+                                 128,          /* frames per buffer, i.e. the number
                                                 of sample frames that PortAudio will
                                                 request from the callback. Many apps
                                                 may want to use
@@ -582,6 +587,8 @@ bool openStream(int inDev, int outDev, PaStream **stream)
         printf(  "PortAudio start error: %s\n", Pa_GetErrorText( err ) );
         return false;
     }
+    //const PaStreamInfo *psi = Pa_GetStreamInfo(stream);
+    //cout << psi->inputLatency;
     
     return true;
 }
@@ -644,7 +651,7 @@ void compute()
     // One input channel is used for latency correction.
     // It is electrically connected to one output.
     int md = delays[ref_out][ref_in];
-    if (debug) cout << "reference delay " << md << endl;
+    cout << "reference delay " << md << endl;
     for (int n = 0; n < num; n++)
     {
         for (int inp = 0; inp < inputs; inp++)
