@@ -39,6 +39,12 @@ class BlockingQueue
     
 public:
     
+    bool isEmpty()
+    {
+        std::unique_lock<std::mutex> lk(mtx);
+        return qu.size() == 0;
+    }
+    
     int pop()
     {
         std::unique_lock<std::mutex> lk(mtx);
@@ -73,7 +79,7 @@ BlockingQueue bq;
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
 #define REPEAT      20
-//#define EXTRA_PLAY  20
+#define QUALITY     0.0
 #define OSC_IP      "192.168.1.4"
 #define OSC_PORT    "7770"
 
@@ -191,11 +197,7 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
     }
     else
     {
-//        if (d.empty-- == EXTRA_PLAY)
-        {
-//            memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * inputs);
-        }
-//        if (!d.empty)
+        if (bq.isEmpty()) // COMMENT THIS if (..) CONDITION OUT IF IT DOESN'T WORK WELL
         {
             memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * inputs);
             bq.push(33);
@@ -228,7 +230,7 @@ int pulsenumber = 5;
 float maxdist = 100;
 
 int repeat = REPEAT;
-//int extraPlay = EXTRA_PLAY;
+float qual = QUALITY;
 const char * oscIP = OSC_IP;
 const char * oscPort = OSC_PORT;
 const char * adcIn = "Built-in";
@@ -298,7 +300,6 @@ int main(int argc, const char * argv[])
                             << " channel: " << ch
                             << endl;
                     }
-//                    sd.empty = extraPlay;
                     sd.ptr = 0; // start the pulse again
                 }
                 Pa_StopStream(stream);
@@ -372,11 +373,11 @@ void loadConfiguration(const char *cfg)
                 repeat = atoi(strtok(0, "\r\n"));
                 cout << "repeat " << repeat << endl;
             }
-//            else if (!strcmp(p, "extraPlay"))
-//            {
-//                extraPlay = atoi(strtok(0, "\r\n"));
-//                cout << "extraPlay " << extraPlay << endl;
-//            }
+            else if (!strcmp(p, "quality"))
+            {
+                qual = atof(strtok(0, "\r\n"));
+                cout << "quality " << qual << endl;
+            }
             else if (!strcmp(p, "oscIP"))
             {
                 oscIP = strdup(strtok(0, "\r\n"));
@@ -559,13 +560,12 @@ bool openStream(int inDev, int outDev, PaStream **stream)
     outPars.device = outDev;
     outPars.channelCount = sd.sfInfo.channels;
     sd.ptr = 0;
-//    sd.empty = extraPlay;
     /* Open an audio I/O stream. */
     PaError err = Pa_OpenStream( stream,
                                  &inPars,          /* no input channels */
                                  &outPars,          /* stereo output */
                                  SAMPLE_RATE,
-                                 128,          /* frames per buffer, i.e. the number
+                                 64,          /* frames per buffer, i.e. the number
                                                 of sample frames that PortAudio will
                                                 request from the callback. Many apps
                                                 may want to use
@@ -637,14 +637,24 @@ void compute()
     SAMPLE *res = new SAMPLE[sd.sfInfo.frames];
     for (int n = 0; n < num; n++)
     {
-        //int inps = (n == num - 1) ? inputs - 1 : inputs;
         for (int inp = 0; inp < inputs; inp++)
         {
+            // don't compute correlation of reference input with non-reference speakers
+            if (inp == ref_in && n != ref_out) continue;
+            
             xcorr(n, inp, res);
             int idx = findMaxAbs(res, (int)sd.sfInfo.frames);
-            delays[n][inp] = idx;
+            const char *ok = " good";
+            if (fabs(res[idx]) >= qual)
+            {
+                delays[n][inp] = idx;
+            }
+            else
+            {
+                ok = " ignored";
+            }
             if (debug) cout << "speaker " << n << " mic " << inp << " idx " <<
-                idx << " val " << res[idx] << endl;
+                idx << " val " << res[idx] << ok << endl;
         }
     }
 
@@ -730,9 +740,11 @@ bool distOk(float &d, int n, float z)
 
 void report(lo_address t)
 {
-    // for all microphones
-    for (int inp = 0; inp < inputs - 1; inp++)
+    for (int inp = 0; inp < inputs; inp++)
     {
+        // for all microphones except reference one
+        if (inp == ref_in) continue;
+
         float X = 0, Y = 0;
         int averNum = 0;
         cout << "input:" << inp << endl;
