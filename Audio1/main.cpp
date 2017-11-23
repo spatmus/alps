@@ -68,6 +68,9 @@ public:
 
 BlockingQueue bq;
 
+// http://en.cppreference.com/w/cpp/thread/condition_variable
+
+
 // TODO
 // 1. The values defined below should be read from a configuration file -- Done
 // 2. Add a check that reference channel is connected properly (the first speaker output connected to the last input)
