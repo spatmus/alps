@@ -30,11 +30,13 @@ static long getmicros()
 #define DESIRED_LATENCY 0.01
 typedef float SAMPLE;
 
+// http://en.cppreference.com/w/cpp/thread/condition_variable
+
 struct Locker
 {
-    condition_variable allowcompute;
-    condition_variable doneaudio;
-    mutex mtx;
+    std::condition_variable allowcompute;
+    std::condition_variable doneaudio;
+    std::mutex mtx;
 
     int audioPtr = 0;
     bool compute = true;
@@ -47,7 +49,7 @@ struct Locker
 
     void addAudioPtr(int add, int cnt)
     {
-        unique_lock<mutex> lck(mtx);
+        std::unique_lock<std::mutex> lck(mtx);
         audioPtr += add;
         if (audioPtr >= cnt)
         {
@@ -58,7 +60,7 @@ struct Locker
 
     void transferData(int cnt)
     {
-        unique_lock<mutex> lck(mtx);
+        std::unique_lock<std::mutex> lck(mtx);
         compute = false;
         // wait until audio is complete
         while (getAudioPtr() < cnt)
@@ -76,7 +78,7 @@ struct Locker
 
     void allowCompute()
     {
-        unique_lock<mutex> lck(mtx);
+        std::unique_lock<std::mutex> lck(mtx);
         compute = true;
         allowcompute.notify_one();
 //        cout << now() << " == allow compute" << endl;
@@ -84,9 +86,6 @@ struct Locker
 };
 
 Locker lckr;
-
-// http://en.cppreference.com/w/cpp/thread/condition_variable
-
 
 // TODO
 // 2. Add a check that reference channel is connected properly (the first speaker output connected to the last input)
@@ -200,7 +199,7 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
                           void *userData )
 {
     SoundData &d = *((SoundData*)userData);
-    int ptr = lckr.audioPtr();
+    int ptr = lckr.getAudioPtr();
     if (ptr == 0)
     {
         memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * inputs);
@@ -218,7 +217,7 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
         long pIn = ptr * inputs;
         memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * frames * d.sfInfo.channels);
         memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * frames * inputs);
-        lckr.addAudioPtr(frames, d.sfInfo.frames);
+        lckr.addAudioPtr((int)frames, d.sfInfo.frames);
     }
     else
     {
@@ -227,33 +226,39 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
     return paContinue;
 }
 
+int repeat = REPEAT;
+float qual = QUALITY;
+const char * oscIP = OSC_IP;
+const char * oscPort = OSC_PORT;
+bool debug = false;
+
+void compute();
+void report(lo_address t);
+
 void mainLoop()
 {
     lo_address t = lo_address_new(oscIP, oscPort);
     for (int i = 0; i < repeat; i++)
     {
-        lckr.transferData(sd.sfInfo.frames);
         long t0 = getmicros();
+        lckr.transferData((int)sd.sfInfo.frames);
+        long t1 = getmicros();
         if (debug) cout << "run " << (i + 1) << endl;
         if (i)
         {
             compute();
         }
-        long t1 = getmicros();
+        long t2 = getmicros();
         if (i)
         {
             report(t);
         }
-        long t2 = getmicros();
-        // wait until the end of playback
-        int ch = bq.pop();
         long t3 = getmicros();
         if (debug)
         {
-            cout << "compute: " << (t1 - t0)
-                << " report: " << (t2 - t1)
-                << " wait: " << (t3 - t2)
-                << " channel: " << ch
+            cout << "wait: " << (t1 - t0)
+                << " compute: " << (t2 - t1)
+                << " report: " << (t3 - t2)
                 << endl;
         }
     }
@@ -264,8 +269,6 @@ void fadeInOutEx();
 void saveWave(const char *fname, bool bang);
 bool selectDevices(int *inDev, int *outDev);
 bool openStream(int inDev, int outDev, PaStream **stream);
-void compute();
-void report(lo_address t);
 void loadConfiguration(const char *cfg);
 void findSpeakerPairs(vector<spair> &pairs);
 float quality(int input);
@@ -281,14 +284,9 @@ int pulsenumber = 5;
 
 float maxdist = 100;
 
-int repeat = REPEAT;
-float qual = QUALITY;
-const char * oscIP = OSC_IP;
-const char * oscPort = OSC_PORT;
 const char * adcIn = "Built-in";
 const char * adcOut = "Built-in";
 
-bool debug = false;
 int ref_out = 0;
 int ref_in = 0;
 
