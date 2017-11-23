@@ -30,46 +30,62 @@ static long getmicros()
 #define DESIRED_LATENCY 0.01
 typedef float SAMPLE;
 
-// refer to https://juanchopanzacpp.wordpress.com/2013/02/26/concurrent-queue-c11/
-class BlockingQueue
+struct Locker
 {
-    std::condition_variable cond;
-    std::mutex mtx;
-    std::queue<int> qu;
-    
-public:
-    
-    bool isEmpty()
+    condition_variable allowcompute;
+    condition_variable doneaudio;
+    mutex mtx;
+
+    int audioPtr = 0;
+    bool compute = true;
+
+    int getAudioPtr()
     {
-        std::unique_lock<std::mutex> lk(mtx);
-        return qu.size() == 0;
+//        unique_lock<mutex> lck(mtx);
+        return audioPtr;
     }
-    
-    int pop()
+
+    void addAudioPtr(int add, int cnt)
     {
-        std::unique_lock<std::mutex> lk(mtx);
-        while (qu.empty())
+        unique_lock<mutex> lck(mtx);
+        audioPtr += add;
+        if (audioPtr >= cnt)
         {
-            cond.wait(lk);
+            doneaudio.notify_one();
+//            cout << now() << " == audio done" << endl;
         }
-        int v = qu.front();
-        qu.pop();
-        return v;
     }
-    
-    void push(int v)
+
+    void transferData(int cnt)
     {
-        std::unique_lock<std::mutex> lk(mtx);
-        qu.push(v);
-        lk.unlock();
-        cond.notify_one();
+        unique_lock<mutex> lck(mtx);
+        compute = false;
+        // wait until audio is complete
+        while (getAudioPtr() < cnt)
+        {
+            doneaudio.wait(lck);
+        }
+
+        audioPtr = 0;
+        // wait for notification from the audio thread
+        while (!compute)
+        {
+            allowcompute.wait(lck);
+        }
+    }
+
+    void allowCompute()
+    {
+        unique_lock<mutex> lck(mtx);
+        compute = true;
+        allowcompute.notify_one();
+//        cout << now() << " == allow compute" << endl;
     }
 };
 
-BlockingQueue bq;
+Locker lckr;
 
 // TODO
-// 1. The values defined below should be read from a configuration file -- Done
 // 2. Add a check that reference channel is connected properly (the first speaker output connected to the last input)
 // 3. Add a signal quality check as a ratio between the highest and the lowest RMS of parts of input signals
 
@@ -156,7 +172,6 @@ vector<spair> speakers;
 struct SoundData {
     long        szIn;
     long        szOut;
-    long        ptr;
     SAMPLE      *ping;
     SAMPLE      *pong;
     SAMPLE      *bang;
@@ -164,7 +179,7 @@ struct SoundData {
     int         empty;
 };
 
-SoundData sd = {0, 0, 0, NULL, NULL};
+SoundData sd = {0, 0, NULL, NULL};
 
 // the measurement result
 int delays[MAX_OUTPUTS][MAX_INPUTS];
@@ -182,29 +197,63 @@ static int paCallback( const void *inputBuffer, void *outputBuffer,
                           void *userData )
 {
     SoundData &d = *((SoundData*)userData);
-    if (d.ptr < d.sfInfo.frames)
+    int ptr = lckr.audioPtr();
+    if (ptr == 0)
     {
-        long long frames = d.sfInfo.frames - d.ptr;
+        memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * inputs);
+        lckr.allowCompute();
+    }
+
+    if (ptr < d.sfInfo.frames)
+    {
+        long long frames = d.sfInfo.frames - ptr;
         if (frames > framesPerBuffer)
         {
             frames = framesPerBuffer;
         }
-        long pOut = d.ptr * d.sfInfo.channels;
-        long pIn = d.ptr * inputs;
+        long pOut = ptr * d.sfInfo.channels;
+        long pIn = ptr * inputs;
         memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * frames * d.sfInfo.channels);
         memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * frames * inputs);
-        d.ptr += frames;
+        lckr.addAudioPtr(frames, d.sfInfo.frames);
     }
     else
     {
-        if (bq.isEmpty()) // COMMENT THIS if (..) CONDITION OUT IF IT DOESN'T WORK WELL
-        {
-            memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * inputs);
-            bq.push(33);
-        }
         memset(outputBuffer, 0, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
     }
     return paContinue;
+}
+
+void mainLoop()
+{
+    lo_address t = lo_address_new(oscIP, oscPort);
+    for (int i = 0; i < repeat; i++)
+    {
+        lckr.transferData(sd.sfInfo.frames);
+        long t0 = getmicros();
+        if (debug) cout << "run " << (i + 1) << endl;
+        if (i)
+        {
+            compute();
+        }
+        long t1 = getmicros();
+        if (i)
+        {
+            report(t);
+        }
+        long t2 = getmicros();
+        // wait until the end of playback
+        int ch = bq.pop();
+        long t3 = getmicros();
+        if (debug)
+        {
+            cout << "compute: " << (t1 - t0)
+                << " report: " << (t2 - t1)
+                << " wait: " << (t3 - t2)
+                << " channel: " << ch
+                << endl;
+        }
+    }
 }
 
 bool loadWave(const char *fname);
@@ -274,34 +323,7 @@ int main(int argc, const char * argv[])
             PaStream *stream = 0;
             if (selectDevices(&inDev, &outDev) && openStream(inDev, outDev, &stream))
             {
-                lo_address t = lo_address_new(oscIP, oscPort);
-                for (int i = 0; i < repeat; i++)
-                {
-                    long t0 = getmicros();
-                    if (debug) cout << "run " << (i + 1) << endl;
-                    if (i)
-                    {
-                        compute();
-                    }
-                    long t1 = getmicros();
-                    if (i)
-                    {
-                        report(t);
-                    }
-                    long t2 = getmicros();
-                    // wait until the end of playback
-                    int ch = bq.pop();
-                    long t3 = getmicros();
-                    if (debug)
-                    {
-                        cout << "compute: " << (t1 - t0)
-                            << " report: " << (t2 - t1)
-                            << " wait: " << (t3 - t2)
-                            << " channel: " << ch
-                            << endl;
-                    }
-                    sd.ptr = 0; // start the pulse again
-                }
+                mainLoop();
                 Pa_StopStream(stream);
                 Pa_CloseStream(stream);
                 if (debug)
@@ -559,7 +581,6 @@ bool openStream(int inDev, int outDev, PaStream **stream)
     PaStreamParameters outPars = inPars;
     outPars.device = outDev;
     outPars.channelCount = sd.sfInfo.channels;
-    sd.ptr = 0;
     /* Open an audio I/O stream. */
     PaError err = Pa_OpenStream( stream,
                                  &inPars,          /* no input channels */
