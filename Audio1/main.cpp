@@ -766,6 +766,17 @@ void report(lo_address t)
         // for all microphones except reference one
         if (inp == ref_in) continue;
 
+        // report all distances
+        for (int n = 0; n < sd.sfInfo.channels; n++)
+        {
+            float d = (float)delays[n][inp] / SAMPLE_RATE * 330;
+            if (!distOk(d, n, xy[n][2])) continue;
+            if (lo_send(t, "/distance", "iif", inp + 1, n + 1, d) == -1)
+            {
+                cout << "OSC error " << lo_address_errno(t) << lo_address_errstr(t) << endl;
+            }
+        }
+
         float X = 0, Y = 0;
         int averNum = 0;
         cout << "input:" << inp << endl;
