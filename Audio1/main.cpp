@@ -772,7 +772,10 @@ void report(lo_address t)
         {
             float d = (float)delays[n][inp] / SAMPLE_RATE * 330;
             if (!distOk(d, n, xy[n][2])) continue;
-            if (lo_send(t, "/distance", "iif", inp + 1, n + 1, d) == -1)
+            
+            char lbl[40];
+            sprintf(lbl, "/distance%d", inp + 1);
+            if (lo_send(t, lbl, "if", n + 1, d) == -1)
             {
                 cout << "OSC error " << lo_address_errno(t) << lo_address_errstr(t) << endl;
             }
