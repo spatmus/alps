@@ -762,10 +762,13 @@ bool distOk(float &d, int n, float z)
 
 void report(lo_address t)
 {
+    char lbl[40]; // for OSC messages
+
     for (int inp = 0; inp < inputs; inp++)
     {
         // for all microphones except reference one
         if (inp == ref_in) continue;
+        cout << "input:" << inp << endl;
 
         // report all distances
         for (int n = 0; n < sd.sfInfo.channels; n++)
@@ -773,7 +776,6 @@ void report(lo_address t)
             float d = (float)delays[n][inp] / SAMPLE_RATE * 330;
             if (!distOk(d, n, xy[n][2])) continue;
             
-            char lbl[40];
             sprintf(lbl, "/distance%d", inp + 1);
             if (lo_send(t, lbl, "if", n + 1, d) == -1)
             {
@@ -783,7 +785,6 @@ void report(lo_address t)
 
         float X = 0, Y = 0;
         int averNum = 0;
-        cout << "input:" << inp << endl;
         // for all speaker pairs
         for (int i = 0; i < speakers.size(); i++)
         {
@@ -796,10 +797,14 @@ void report(lo_address t)
             }
             
             float d1 = (float)delays[n][inp] / SAMPLE_RATE * 330;
-            if (!distOk(d1, n, xy[n][2])) continue;
-            
             float d2 = (float)delays[m][inp] / SAMPLE_RATE * 330;
-            if (!distOk(d2, m, xy[m][2])) continue;
+            float z1 = xy[n][2];
+            float z2 = xy[m][2];
+
+            if (debug) cout << "speakers (" << n << "," << m << ") dist (" << d1 << "," << d2 << ") z (" << z1 << "," << z2 << ")" << endl;
+
+            if (!distOk(d1, n, z1)) continue;
+            if (!distOk(d2, m, z2)) continue;
 
             float x, y;
             if (distToXY(d1, d2, n, m, &x, &y))
@@ -821,7 +826,6 @@ void report(lo_address t)
             cout << "position estimate for mic " << inp <<
                 " x=" << X << " y=" << Y << " (" << averNum << ")" << endl;
 
-            char lbl[40];
             sprintf(lbl, "/position%d", inp + 1);
             if (lo_send(t, lbl, "ff", X, Y) == -1) 
             {
@@ -831,6 +835,11 @@ void report(lo_address t)
         else
         {
             cout << "no estimates for mic " << inp << endl;
+            sprintf(lbl, "/noestimate%d", inp + 1);
+            if (lo_send(t, lbl, "") == -1)
+            {
+                cout << "OSC error " << lo_address_errno(t) << lo_address_errstr(t) << endl;
+            }
         }
     }
 }
