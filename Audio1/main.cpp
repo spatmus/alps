@@ -298,7 +298,7 @@ int ref_in = 0;
 int main(int argc, const char * argv[])
 {
     loadConfiguration(argc > 1 ? argv[1] : 0);
-    findSpeakerPairs(speakers);
+    if (!autopan) findSpeakerPairs(speakers);
 
     int inDev = -1, outDev = -1;
     if (loadWave(fname))
