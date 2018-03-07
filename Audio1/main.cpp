@@ -785,7 +785,7 @@ void report(lo_address t)
         for (int n = 0; n < sd.sfInfo.channels; n++)
         {
             float d = (float)delays[n][inp] / SAMPLE_RATE * 330;
-            if (!distOk(d, n, xy[n][2])) continue;
+            if (!distOk(d, n, autopan ? 0 : xy[n][2])) continue;
             
             sprintf(lbl, "/mic%d", inp + 1);
             if (lo_send(t, lbl, "if", n + 1, d) == -1)
