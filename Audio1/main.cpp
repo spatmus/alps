@@ -231,8 +231,9 @@ float qual = QUALITY;
 const char * oscIP = OSC_IP;
 const char * oscPort = OSC_PORT;
 bool debug = false;
+bool autopan = false;
 
-void compute();
+int compute(); // returns reference delay in samples
 void report(lo_address t);
 
 void mainLoop()
@@ -246,7 +247,11 @@ void mainLoop()
         if (debug) cout << "run " << (i + 1) << endl;
         if (i)
         {
-            compute();
+            if (compute() == 0)
+            {
+                cout << "zero reference delay; measurement ignored." << endl;
+                continue;
+            }
         }
         long t2 = getmicros();
         if (i)
@@ -435,6 +440,11 @@ void loadConfiguration(const char *cfg)
             {
                 debug = atoi(strtok(0, "\r\n")) != 0;
                 cout << "debug " << debug << endl;
+            }
+            else if (!strcmp(p, "autopan"))
+            {
+                autopan = atoi(strtok(0, "\r\n")) != 0;
+                cout << "autopan " << autopan << endl;
             }
             else if (!strcmp(p, "fadems"))
             {
@@ -652,7 +662,7 @@ int findMaxAbs(SAMPLE *d, int sz)
     return idx;
 }
 
-void compute()
+int compute()
 {
     memset(delays, 0, sizeof(delays));
     int num = sd.sfInfo.channels; // output channels
@@ -693,6 +703,7 @@ void compute()
     }
 
     delete [] res;
+    return md;
 }
 
 // Estimates the location x, y from distances d1,d2 to speakers
@@ -776,12 +787,14 @@ void report(lo_address t)
             float d = (float)delays[n][inp] / SAMPLE_RATE * 330;
             if (!distOk(d, n, xy[n][2])) continue;
             
-            sprintf(lbl, "/distance%d", inp + 1);
+            sprintf(lbl, "/mic%d", inp + 1);
             if (lo_send(t, lbl, "if", n + 1, d) == -1)
             {
                 cout << "OSC error " << lo_address_errno(t) << lo_address_errstr(t) << endl;
             }
         }
+
+        if (autopan) continue;
 
         float X = 0, Y = 0;
         int averNum = 0;
