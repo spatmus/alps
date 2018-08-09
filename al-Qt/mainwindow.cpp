@@ -35,8 +35,39 @@ void MainWindow::loadWave()
     if (wf.load(fname, sd.ping))
     {
         fmt = wf.fileFormat();
+        sd.channels = fmt.channelCount();
+        sd.frames = sd.ping.size() / sd.channels;
+
         ui->statusBar->showMessage(QString::number(sd.ping.size()) + " samples");
+
+        if (fmt.channelCount() != speakers.lastSpeaker + 1)
+        {
+            ui->textBrowser->append("WARNING Number of configured speakers " +
+                                    QString::number(speakers.lastSpeaker + 1)
+                                    + " != " + QString::number(fmt.channelCount()));
+        }
+
+        float dur = (float)sd.frames / SAMPLE_RATE;
+        if (dur > duration)
+        {
+            dur = duration;
+        }
+        // the part of used sound might be shorter than everything loaded from file
+        sd.frames = dur * SAMPLE_RATE;
+        sd.szOut = sd.frames * sd.channels;
+        sd.szIn = sd.frames * inputs;
+        fadeInOutEx();
+
         ui->graph1->setData(sd.ping, fmt.channelCount());
+
+        for (int i = 0; i < sd.channels; i++)
+        {
+            xyz &co = speakers.getCoordinates(i);
+            ui->textBrowser->append("[" + QString::number(co.x) + ", " +
+                                    QString::number(co.y) + ", " +
+                                    QString::number(co.z) + "]");
+        }
+
     }
     else
     {
@@ -232,6 +263,67 @@ void MainWindow::loadConfiguration(const char *cfg)
                     qDebug() << "IGNORED " << buf;
                 }
             }
+        }
+    }
+}
+
+void MainWindow::zeroChannel(int ch, long from, long to)
+{
+    int nch = sd.channels;
+    for (long i = from, idx = ch + nch * from; i < to; i++, idx += nch)
+    {
+        sd.ping[idx] = 0;
+    }
+}
+
+void MainWindow::pulseChannel(int ch, long fade, long from, long to)
+{
+    int nch = sd.channels;
+    for (long i = 0, idx1 = ch + nch * from, idx2 = nch * to + ch; i < fade;
+         i++, idx1 += nch, idx2 -= nch)
+    {
+        float v = (float) i / fade;
+        sd.ping[idx1] *= v;
+        sd.ping[idx2] *= v;
+    }
+}
+
+void MainWindow::fadeInOutEx()
+{
+    // check if parameters make sense
+    if (fadems * 2 > pulsems)
+    {
+        // std::cout << "ERROR: fadems " << fadems << " is too big, should not be greater than pulsems " << pulsems << std::endl;
+        return;
+    }
+
+    int nch = sd.channels;
+    long pls = pulsems / 1000.0 * SAMPLE_RATE;
+    long pau = pausems / 1000.0 * SAMPLE_RATE;
+    long period = pls + pau;
+    long cnt = sd.frames;
+    for (int ch = 0; ch < nch; ch++)
+    {
+        long offset = offsets[ch] / 1000.0 * SAMPLE_RATE;
+        zeroChannel(ch, 0, offset);
+
+//        if (debug) cout << "pulse " << pls << " pause " << pau << " ofs " << offset << endl;
+
+        for (int i = 0; i < pulsenumber && offset < cnt; i++)
+        {
+            long end = offset + pls;
+            if (end >= cnt) end = cnt - 1;
+            // if (debug) cout << "ch " << ch << " pls " << i << " ofs " << offset << " end " << end << endl;
+            pulseChannel(ch, fadems / 1000.0 * SAMPLE_RATE, offset, end);
+            long end2 = end + pau;
+            if (end2 > cnt) end2 = cnt;
+            zeroChannel(ch, end, end2);
+            offset += period;
+        }
+
+        if (offset < cnt)
+        {
+            zeroChannel(ch, offset, cnt);
         }
     }
 }
