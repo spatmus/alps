@@ -514,6 +514,10 @@ void loadConfiguration(const char *cfg)
         fclose(f);
         cout << "-----" << endl;
     }
+    else
+    {
+        cout << "----- Not found configuration " << cfg << endl;
+    }
 }
 
 int selectFromList(int numDevices, bool inp)
