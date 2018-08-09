@@ -1,0 +1,31 @@
+//
+//  Synchro.hpp
+//  alOF
+//
+//  Created by user on 03.08.2018.
+//
+
+#ifndef Synchro_hpp
+#define Synchro_hpp
+
+#include <mutex>
+
+// http://en.cppreference.com/w/cpp/thread/condition_variable
+
+struct Synchro
+{
+    std::condition_variable allowcompute;
+    std::condition_variable doneaudio;
+    std::mutex mtx;
+    
+    int audioPtr = 0;
+    bool compute = true;
+    
+    int getAudioPtr();
+    void addAudioPtr(int add, int cnt);
+    
+    void transferData(int cnt);
+    void allowCompute();
+};
+
+#endif /* Synchro_hpp */

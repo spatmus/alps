@@ -1,0 +1,51 @@
+//
+//  Synchro.cpp
+//  alOF
+//
+//  Created by user on 03.08.2018.
+//
+
+#include "Synchro.hpp"
+
+int Synchro::getAudioPtr()
+{
+    //        unique_lock<mutex> lck(mtx);
+    return audioPtr;
+}
+
+void Synchro::addAudioPtr(int add, int cnt)
+{
+    std::unique_lock<std::mutex> lck(mtx);
+    audioPtr += add;
+    if (audioPtr >= cnt)
+    {
+        doneaudio.notify_one();
+        //            cout << now() << " == audio done" << endl;
+    }
+}
+
+void Synchro::transferData(int cnt)
+{
+    std::unique_lock<std::mutex> lck(mtx);
+    compute = false;
+    // wait until audio is complete
+    while (getAudioPtr() < cnt)
+    {
+        doneaudio.wait(lck);
+    }
+    
+    audioPtr = 0;
+    // wait for notification from the audio thread
+    while (!compute)
+    {
+        allowcompute.wait(lck);
+    }
+}
+
+void Synchro::allowCompute()
+{
+    std::unique_lock<std::mutex> lck(mtx);
+    compute = true;
+    allowcompute.notify_one();
+    //        cout << now() << " == allow compute" << endl;
+}
