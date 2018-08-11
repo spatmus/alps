@@ -28,7 +28,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="graph2" native="true">
+       <widget class="SignalView" name="graph2" native="true">
         <property name="minimumSize">
          <size>
           <width>0</width>

@@ -31,7 +31,21 @@ SOURCES += \
     Synchro.cpp \
     wavfile.cpp \
     signalview.cpp \
-    sounddevice.cpp
+    sounddevice.cpp \
+    mainloop.cpp \
+    ../alglib/src/alglibinternal.cpp \
+    ../alglib/src/alglibmisc.cpp \
+    ../alglib/src/ap.cpp \
+    ../alglib/src/dataanalysis.cpp \
+    ../alglib/src/diffequations.cpp \
+    ../alglib/src/fasttransforms.cpp \
+    ../alglib/src/integration.cpp \
+    ../alglib/src/interpolation.cpp \
+    ../alglib/src/linalg.cpp \
+    ../alglib/src/optimization.cpp \
+    ../alglib/src/solvers.cpp \
+    ../alglib/src/specialfunctions.cpp \
+    ../alglib/src/statistics.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -41,7 +55,22 @@ HEADERS += \
     Synchro.hpp \
     wavfile.h \
     signalview.h \
-    sounddevice.h
+    sounddevice.h \
+    mainloop.h \
+    ../alglib/src/alglibinternal.h \
+    ../alglib/src/alglibmisc.h \
+    ../alglib/src/ap.h \
+    ../alglib/src/dataanalysis.h \
+    ../alglib/src/diffequations.h \
+    ../alglib/src/fasttransforms.h \
+    ../alglib/src/integration.h \
+    ../alglib/src/interpolation.h \
+    ../alglib/src/linalg.h \
+    ../alglib/src/optimization.h \
+    ../alglib/src/solvers.h \
+    ../alglib/src/specialfunctions.h \
+    ../alglib/src/statistics.h \
+    ../alglib/src/stdafx.h
 
 FORMS += \
         mainwindow.ui \

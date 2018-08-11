@@ -10,7 +10,10 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    speakers(50),
+    sound(synchro, sd),
+    mainloop(synchro, sd)
 {
     QLocale::setDefault(QLocale::English);
 
@@ -20,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     ui->setupUi(this);
+
+    connect(&sound, SIGNAL(info(QString)), this, SLOT(soundInfo(QString)));
+    connect(&mainloop, SIGNAL(info(QString)), this, SLOT(soundInfo(QString)));
 }
 
 MainWindow::~MainWindow()
@@ -29,7 +35,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::initSound()
 {
-    if (!sound.selectDevices(adcIn, dacOut, inputs, outputs, SAMPLE_RATE))
+    if (!sound.selectDevices(adcIn, dacOut, mainloop.inputs, mainloop.outputs, SAMPLE_RATE))
     {
         ui->textBrowser->append("Sound device: " + sound.error());
     }
@@ -48,6 +54,8 @@ void MainWindow::loadWave()
     {
         fmt = wf.fileFormat();
         sd.channels = fmt.channelCount();
+        sd.pong.resize(sd.ping.size());
+        sd.bang.resize(sd.ping.size());
         sd.frames = sd.ping.size() / sd.channels;
 
         ui->statusBar->showMessage(QString::number(sd.ping.size()) + " samples");
@@ -67,7 +75,7 @@ void MainWindow::loadWave()
         // the part of used sound might be shorter than everything loaded from file
         sd.frames = dur * SAMPLE_RATE;
         sd.szOut = sd.frames * sd.channels;
-        sd.szIn = sd.frames * inputs;
+        sd.szIn = sd.frames * mainloop.inputs;
         fadeInOutEx();
 
         ui->graph1->setData(sd.ping, fmt.channelCount(), sd.frames);
@@ -108,12 +116,30 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionRun_toggled(bool active)
 {
-    QString txt = active ? "Stop" : "Run";
-    ui->actionRun->setText(txt);
-    if (txt == "Run") txt = ":/images/images/player_play.png";
-    else if (txt == "Stop") txt = ":/images/images/player_stop.png";
-    ui->actionRun->setIcon(QIcon(txt));
-    ui->statusBar->showMessage(active ? "Running" : "Stopped");
+    if (active)
+    {
+        if (sound.start())
+        {
+            ui->actionRun->setText("Stop");
+            ui->actionRun->setIcon(QIcon(":/images/images/player_stop.png"));
+            ui->statusBar->showMessage("Running");
+            mainloop.start();
+        }
+        else
+        {
+            ui->statusBar->showMessage("Failed to start", 3000);
+            ui->textBrowser->append(sound.error());
+        }
+    }
+    else
+    {
+        mainloop.requestInterruption();
+        mainloop.wait();
+        sound.stop();
+        ui->actionRun->setText("Run");
+        ui->actionRun->setIcon(QIcon(":/images/images/player_play.png"));
+        ui->statusBar->showMessage("Stopped");
+    }
 }
 
 void MainWindow::on_actionExit_triggered()
@@ -159,18 +185,13 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
             else if (ss[0] == "inputs")
             {
-                inputs = ss[1].toInt(); //;
-                qDebug() << "inputs " << inputs;
-            }
-            else if (ss[0] == "repeat")
-            {
-                repeat = ss[1].toInt();
-                qDebug() << "repeat " << repeat;
+                mainloop.inputs = ss[1].toInt(); //;
+                qDebug() << "inputs " << mainloop.inputs;
             }
             else if (ss[0] == "quality")
             {
-                qual = ss[1].toFloat();
-                qDebug() << "quality " << qual;
+                mainloop.qual = ss[1].toFloat();
+                qDebug() << "quality " << mainloop.qual;
             }
             else if (ss[0] == "oscIP")
             {
@@ -189,13 +210,13 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
             else if (ss[0] == "refIn")
             {
-                ref_in = ss[1].toInt();
-                qDebug() << "refIn " << ref_in;
+                mainloop.ref_in = ss[1].toInt();
+                qDebug() << "refIn " << mainloop.ref_in;
             }
             else if (ss[0] == "refOut")
             {
-                ref_out = ss[1].toInt();
-                qDebug() << "refOut " << ref_out;
+                mainloop.ref_out = ss[1].toInt();
+                qDebug() << "refOut " << mainloop.ref_out;
             }
             else if (ss[0] == "dacOut")
             {
@@ -344,32 +365,21 @@ void MainWindow::fadeInOutEx()
     }
 }
 
-/*
- *     SoundData &d = *((SoundData*)userData);
-    int ptr = lckr.getAudioPtr();
-    if (ptr == 0)
-    {
-        memcpy(d.bang, d.pong, sizeof(SAMPLE) * d.sfInfo.frames * inputs);
-        lckr.allowCompute();
-    }
+void MainWindow::soundInfo(QString info)
+{
+    ui->textBrowser->append(info);
+}
 
-    if (ptr < d.sfInfo.frames)
+void MainWindow::on_actionDebug_triggered()
+{
+    debug = ui->actionDebug->isChecked();
+    if (debug)
     {
-        long long frames = d.sfInfo.frames - ptr;
-        if (frames > framesPerBuffer)
-        {
-            frames = framesPerBuffer;
-        }
-        long pOut = ptr * d.sfInfo.channels;
-        long pIn = ptr * inputs;
-        memcpy(outputBuffer, d.ping + pOut, sizeof(SAMPLE) * frames * d.sfInfo.channels);
-        memcpy(d.pong + pIn, inputBuffer, sizeof(SAMPLE) * frames * inputs);
-        lckr.addAudioPtr((int)frames, d.sfInfo.frames);
+        ui->graph2->setData(sd.bang, fmt.channelCount(), sd.bang.size());
     }
     else
     {
-        memset(outputBuffer, 0, sizeof(SAMPLE) * framesPerBuffer * d.sfInfo.channels);
+        ui->graph2->setData(sd.bang, 0, -1);
     }
-    return paContinue;
-*/
-
+    ui->graph2->update();
+}

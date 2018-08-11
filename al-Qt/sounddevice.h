@@ -4,8 +4,22 @@
 #include <QObject>
 #include <QAudioInput>
 #include <QAudioOutput>
+#include "Synchro.hpp"
+#include <QAudioBuffer>
 
-class SoundDevice : public QObject
+struct SoundData {
+    long                    szIn;
+    long                    szOut;
+    std::vector<float>      ping;
+    std::vector<float>      pong;
+    std::vector<float>      bang;
+
+    int                     channels;
+    int                     frames;
+    int                     empty;
+};
+
+class SoundDevice : public QIODevice
 {
     Q_OBJECT
 
@@ -18,12 +32,30 @@ class SoundDevice : public QObject
     QAudioInput     *m_inp = nullptr;
     QAudioOutput    *m_outp = nullptr;
 
+    Synchro         &synchro;
+    SoundData       &sd;
+
     bool select(QString name, QList<QAudioDeviceInfo> &all, QAudioDeviceInfo &dinfo);
 
 public:
-    SoundDevice();
+    SoundDevice(Synchro  &syn, SoundData &data);
+    virtual ~SoundDevice() override { }
+
+    virtual qint64 readData(char *data, qint64 maxlen) override;
+    virtual qint64 writeData(const char *data, qint64 len) override;
+
+    bool start();
+    void stop();
+
     bool selectDevices(QString adc, QString dac, int inputs, int outputs, int sampling);
     QString error() const;
+
+private slots:
+    void handleInStateChanged(QAudio::State newState);
+    void handleOutStateChanged(QAudio::State newState);
+
+signals:
+    void info(QString inf);
 };
 
 #endif // SOUNDDEVICE_H

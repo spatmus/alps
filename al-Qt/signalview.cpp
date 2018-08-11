@@ -6,14 +6,15 @@ SignalView::SignalView(QWidget *parent) : QWidget(parent)
 
 }
 
-void SignalView::setData(std::vector<float> &src, quint32 nch, quint32 dur)
+void SignalView::setData(std::vector<float> &src, quint32 nch, qint32 dur)
 {
     m_nch = nch;
+    if (!m_nch) return;
     top.resize(dim * m_nch);
     bottom.resize(dim * m_nch);
     quint32 sz = src.size() / m_nch;
     float scale = (float)dim / sz;
-    m_dur = dur * scale;
+    m_dur = dur > 0 ? dur * scale : -1;
     for (int ch = 0; ch < m_nch; ch++)
     {
         int idx = -1;
@@ -64,6 +65,9 @@ void SignalView::paintEvent(QPaintEvent *event)
         rrect.translate(0, rrect.height() + 1);
     }
 
-    int mark = scx * m_dur;
-    painter.drawLine(mark, 0, mark, height());
+    if (m_dur > 0)
+    {
+        int mark = scx * m_dur;
+        painter.drawLine(mark, 0, mark, height());
+    }
 }

@@ -7,9 +7,25 @@ QString SoundDevice::error() const
     return m_error;
 }
 
-SoundDevice::SoundDevice()
+SoundDevice::SoundDevice(Synchro &syn, SoundData &data) : synchro(syn), sd(data)
 {
 
+}
+
+bool SoundDevice::start()
+{
+    open(QIODevice::ReadWrite);
+    m_inp->start(this);
+    m_outp->start(this);
+
+    return m_outp->state() != QAudio::StoppedState;
+}
+
+void SoundDevice::stop()
+{
+    m_inp->stop();
+    m_outp->stop();
+    close();
 }
 
 bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int outputs, int sampling)
@@ -19,11 +35,11 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     QAudioFormat format;
     // Set up the format
     format.setSampleRate(sampling);
-    format.setChannelCount(inputs);
+    format.setChannelCount(m_inputs = inputs);
     format.setSampleSize(16);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setSampleType(QAudioFormat::Float);
+    format.setSampleType(QAudioFormat::SignedInt);
 
     QAudioDeviceInfo di;
 
@@ -38,7 +54,7 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     if (select(dac, allOut, di))
     {
         m_dac = di.deviceName();
-        format.setChannelCount(outputs);
+        format.setChannelCount(m_outputs = outputs);
         m_outp = new QAudioOutput(di, format, this);
     }
 
@@ -59,9 +75,8 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     }
     else
     {
-//        outp->start(&gen);
-//        QIODevice *iodev = inp->start();
-//        m_outp->start(m_inp->start());
+        connect(m_inp, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleInStateChanged(QAudio::State)));
+        connect(m_outp, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleOutStateChanged(QAudio::State)));
         return true;
     }
 
@@ -91,4 +106,88 @@ bool SoundDevice::select(QString name, QList<QAudioDeviceInfo> &all, QAudioDevic
     }
 
     return !dname.isEmpty();
+}
+
+void SoundDevice::handleOutStateChanged(QAudio::State newState)
+{
+    emit info("Audio output state " + QString::number(newState));
+
+}
+
+void SoundDevice::handleInStateChanged(QAudio::State newState)
+{
+    emit info("Audio input state " + QString::number(newState));
+    switch (newState) {
+    case QAudio::StoppedState:
+        if (m_inp->error() != QAudio::NoError)
+        {
+            emit info("Audio input error " + QString::number(m_inp->error()));
+            // Error handling
+        } else {
+            emit info("Stopped recording");
+            // Finished recording
+        }
+        break;
+
+    case QAudio::ActiveState:
+        // Started recording - read from IO device
+        emit info("Starting recording");
+
+        break;
+
+    default:
+        // ... other cases as appropriate
+        break;
+    }
+}
+
+qint64 SoundDevice::readData(char *data, qint64 maxlen)
+{
+    for (qint64 i = 0; i < maxlen; i += sizeof (float))
+    {
+        *(float*)(data + i) = sd.ping.data()[i];
+    }
+    /*
+
+    int ptr = synchro.getAudioPtr();
+    long pOut = ptr * sd.channels;
+    long long frames = sd.frames - ptr;
+    if (frames > maxlen)
+    {
+        frames = maxlen;
+    }
+    if (ptr < sd.frames)
+    {
+        memcpy(data, sd.ping.data() + pOut, sizeof(float) * frames * sd.channels);
+        return maxlen;
+    }
+    else
+    {
+        memset(data, 0, maxlen);
+    }
+    */
+    return maxlen;
+}
+
+qint64 SoundDevice::writeData(const char *data, qint64 len)
+{
+    int ptr = synchro.getAudioPtr();
+    if (ptr == 0)
+    {
+        memcpy(sd.bang.data(), sd.pong.data(), sizeof(float) * sd.szIn);
+        synchro.allowCompute();
+    }
+
+    if (ptr < sd.frames)
+    {
+        long long frames = sd.frames - ptr;
+        if (frames > len)
+        {
+            frames = len;
+        }
+        long pIn = ptr * m_inputs;
+        memcpy(sd.pong.data() + pIn, data, sizeof(float) * frames * m_inputs);
+        synchro.addAudioPtr((int)frames, sd.frames);
+    }
+    return len;
 }

@@ -3,37 +3,23 @@
 
 #include <QMainWindow>
 #include <QtMultimedia/qaudioformat.h>
+#include <QAudioBuffer>
 // #include "audiofileloader.h"
 #include "Speakers.hpp"
 #include "Synchro.hpp"
 #include "sounddevice.h"
+#include "mainloop.h"
 
 namespace Ui {
 class MainWindow;
 }
 
 #define DURATION    0.5
-#define MAX_OUTPUTS 16
-#define MAX_INPUTS  16
 #define ADC_INPUTS  2
 #define SAMPLE_RATE 96000
 #define REPEAT      20
-#define QUALITY     0.0
 #define OSC_IP      "192.168.1.4"
 #define OSC_PORT    7770
-
-typedef float SAMPLE;
-
-struct SoundData {
-    long        szIn;
-    long        szOut;
-    std::vector<SAMPLE>      ping;
-    std::vector<SAMPLE>      pong;
-    std::vector<SAMPLE>      bang;
-    int         channels;
-    int         frames;
-    int         empty;
-};
 
 class MainWindow : public QMainWindow
 {
@@ -50,6 +36,8 @@ public:
 private slots:
     void loaded();
 
+    void soundInfo(QString info);
+
     void on_actionRun_toggled(bool active);
 
     void on_actionExit_triggered();
@@ -58,15 +46,18 @@ private slots:
 
     void on_actionSettings_triggered();
 
+    void on_actionDebug_triggered();
+
 private:
     Ui::MainWindow *ui;
 
     QAudioFormat    fmt;
 //    AudioFileLoader loader;
-    Speakers        speakers = Speakers(50);
+    Speakers        speakers;
     Synchro         synchro;
     SoundData       sd;
     SoundDevice     sound;
+    MainLoop        mainloop;
 
     QString adcIn = "Built-in Input";
     QString dacOut = "Built-in Output";
@@ -79,18 +70,7 @@ private:
     int oscPort = OSC_PORT;
     // ofxOscSender osc;
 
-    int inputs = 2; // stereo
-    int outputs = 2;
-    int ref_out = 0;
-    int ref_in = 0;
-
     double duration = DURATION;
-
-    // the measurement result
-    int delays[MAX_OUTPUTS][MAX_INPUTS];
-
-    int repeat = REPEAT;
-    float qual = QUALITY;
 
     bool autopan = false;
     bool debug = false;
