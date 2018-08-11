@@ -27,6 +27,18 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::initSound()
+{
+    if (!sound.selectDevices(adcIn, dacOut, inputs, outputs, SAMPLE_RATE))
+    {
+        ui->textBrowser->append("Sound device: " + sound.error());
+    }
+    else
+    {
+        ui->textBrowser->append("Sound device: " + sound.error());
+    }
+}
+
 void MainWindow::loadWave()
 {
     //    connect(&loader, SIGNAL(done()), this, SLOT(loaded()));
@@ -58,7 +70,7 @@ void MainWindow::loadWave()
         sd.szIn = sd.frames * inputs;
         fadeInOutEx();
 
-        ui->graph1->setData(sd.ping, fmt.channelCount());
+        ui->graph1->setData(sd.ping, fmt.channelCount(), sd.frames);
 
         for (int i = 0; i < sd.channels; i++)
         {
@@ -185,10 +197,10 @@ void MainWindow::loadConfiguration(const char *cfg)
                 ref_out = ss[1].toInt();
                 qDebug() << "refOut " << ref_out;
             }
-            else if (ss[0] == "adcOut")
+            else if (ss[0] == "dacOut")
             {
-                adcOut = ss[1].trimmed();
-                qDebug() << "adcOut " << adcOut;
+                dacOut = ss[1].trimmed();
+                qDebug() << "dacOut " << dacOut;
             }
             else if (ss[0] == "debug")
             {
@@ -254,13 +266,14 @@ void MainWindow::loadConfiguration(const char *cfg)
                         xyz sp(x, y, z);
                         if (!speakers.set(idx, sp))
                         {
-                            qDebug() << "speaker " << spNum << ": IGNORED " << buf;
+                            ui->textBrowser->append("NOTE: speaker " + QString::number(spNum) +
+                                                    ": IGNORED " + buf);
                         }
                     }
                 }
                 else
                 {
-                    qDebug() << "IGNORED " << buf;
+                    ui->textBrowser->append("NOTE: IGNORED " + buf);
                 }
             }
         }
@@ -307,7 +320,10 @@ void MainWindow::fadeInOutEx()
         long offset = offsets[ch] / 1000.0 * SAMPLE_RATE;
         zeroChannel(ch, 0, offset);
 
-//        if (debug) cout << "pulse " << pls << " pause " << pau << " ofs " << offset << endl;
+        if (debug)
+            ui->textBrowser->append("pulse " + QString::number(pls) + " pause "
+                                    + QString::number(pau) + " ofs "
+                                    + QString::number(offset));
 
         for (int i = 0; i < pulsenumber && offset < cnt; i++)
         {

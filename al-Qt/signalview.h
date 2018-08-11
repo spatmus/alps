@@ -13,10 +13,11 @@ class SignalView : public QWidget
     std::vector<float> bottom = std::vector<float>(dim);
 
     quint32 m_nch = 0;
+    quint32 m_dur = 0;
 
 public:
     explicit SignalView(QWidget *parent = nullptr);
-    void setData(std::vector<float> &src, quint32 nch);
+    void setData(std::vector<float> &src, quint32 nch, quint32 dur);
 
 protected:
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;

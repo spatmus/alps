@@ -6,6 +6,7 @@
 // #include "audiofileloader.h"
 #include "Speakers.hpp"
 #include "Synchro.hpp"
+#include "sounddevice.h"
 
 namespace Ui {
 class MainWindow;
@@ -44,6 +45,7 @@ public:
 
     void loadConfiguration(const char *cfg);
     void loadWave();
+    void initSound();
 
 private slots:
     void loaded();
@@ -64,9 +66,10 @@ private:
     Speakers        speakers = Speakers(50);
     Synchro         synchro;
     SoundData       sd;
+    SoundDevice     sound;
 
     QString adcIn = "Built-in Input";
-    QString adcOut = "Built-in Output";
+    QString dacOut = "Built-in Output";
 
     QString fname = "noise.wav";
     QString recname = "record.wav";

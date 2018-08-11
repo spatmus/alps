@@ -30,7 +30,8 @@ SOURCES += \
     Speakers.cpp \
     Synchro.cpp \
     wavfile.cpp \
-    signalview.cpp
+    signalview.cpp \
+    sounddevice.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -39,7 +40,8 @@ HEADERS += \
     Speakers.hpp \
     Synchro.hpp \
     wavfile.h \
-    signalview.h
+    signalview.h \
+    sounddevice.h
 
 FORMS += \
         mainwindow.ui \
