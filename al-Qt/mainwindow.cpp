@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QFile>
 #include <QDebug>
+#include <QDir>
 #include "settingsdialog.h"
 #include "wavfile.h"
 
@@ -24,6 +25,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+    qDebug() << QDir::currentPath();
+
     connect(&sound, SIGNAL(info(QString)), this, SLOT(soundInfo(QString)));
     connect(&mainloop, SIGNAL(info(QString)), this, SLOT(soundInfo(QString)));
 }
@@ -37,12 +40,9 @@ void MainWindow::initSound()
 {
     if (!sound.selectDevices(adcIn, dacOut, mainloop.inputs, mainloop.outputs, SAMPLE_RATE))
     {
-        ui->textBrowser->append("Sound device: " + sound.error());
+        ui->actionRun->setEnabled(false);
     }
-    else
-    {
-        ui->textBrowser->append("Sound device: " + sound.error());
-    }
+    ui->textBrowser->append("Sound device: " + sound.error());
 }
 
 void MainWindow::loadWave()
@@ -92,6 +92,8 @@ void MainWindow::loadWave()
     else
     {
         ui->statusBar->showMessage("Not loaded: " + fname);
+        ui->actionDebug->setEnabled(false);
+        ui->actionRun->setEnabled(false);
     }
 }
 
