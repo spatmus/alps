@@ -20,12 +20,16 @@ struct Synchro
     
     int audioPtr = 0;
     bool compute = true;
+    bool stopped = false;
     
     int getAudioPtr();
     void addAudioPtr(int add, int cnt);
     
     void transferData(int cnt);
     void allowCompute();
+
+public:
+    void setStopped(bool value);
 };
 
 #endif /* Synchro_hpp */

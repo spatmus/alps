@@ -7,6 +7,13 @@
 
 #include "Synchro.hpp"
 
+void Synchro::setStopped(bool value)
+{
+    stopped = value;
+    doneaudio.notify_one();
+    allowcompute.notify_one();
+}
+
 int Synchro::getAudioPtr()
 {
     //        unique_lock<mutex> lck(mtx);
@@ -29,14 +36,14 @@ void Synchro::transferData(int cnt)
     std::unique_lock<std::mutex> lck(mtx);
     compute = false;
     // wait until audio is complete
-    while (getAudioPtr() < cnt)
+    while ((getAudioPtr() < cnt) && !stopped)
     {
         doneaudio.wait(lck);
     }
     
     audioPtr = 0;
     // wait for notification from the audio thread
-    while (!compute)
+    while (!compute && !stopped)
     {
         allowcompute.wait(lck);
     }

@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     ui->setupUi(this);
+    mainloop.setDebug(debug);
 
     qDebug() << QDir::currentPath();
 
@@ -33,6 +34,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    if (ui->actionRun->isChecked())
+    {
+        sound.stop();
+        mainloop.requestInterruption();
+        synchro.setStopped(true);
+        mainloop.wait();
+    }
     delete ui;
 }
 
@@ -54,8 +62,6 @@ void MainWindow::loadWave()
     {
         fmt = wf.fileFormat();
         sd.channels = fmt.channelCount();
-        sd.pong.resize(sd.ping.size());
-        sd.bang.resize(sd.ping.size());
         sd.frames = sd.ping.size() / sd.channels;
 
         ui->statusBar->showMessage(QString::number(sd.ping.size()) + " samples");
@@ -76,6 +82,8 @@ void MainWindow::loadWave()
         sd.frames = dur * SAMPLE_RATE;
         sd.szOut = sd.frames * sd.channels;
         sd.szIn = sd.frames * mainloop.inputs;
+        sd.pong.resize(sd.szIn);
+        sd.bang.resize(sd.szIn);
         fadeInOutEx();
 
         ui->graph1->setData(sd.ping, fmt.channelCount(), sd.frames);
@@ -122,6 +130,7 @@ void MainWindow::on_actionRun_toggled(bool active)
     {
         if (sound.start())
         {
+            ui->textBrowser->clear();
             ui->actionRun->setText("Stop");
             ui->actionRun->setIcon(QIcon(":/images/images/player_stop.png"));
             ui->statusBar->showMessage("Running");
@@ -135,9 +144,10 @@ void MainWindow::on_actionRun_toggled(bool active)
     }
     else
     {
-        mainloop.requestInterruption();
-        mainloop.wait();
         sound.stop();
+        mainloop.requestInterruption();
+        synchro.setStopped(true);
+        mainloop.wait();
         ui->actionRun->setText("Run");
         ui->actionRun->setIcon(QIcon(":/images/images/player_play.png"));
         ui->statusBar->showMessage("Stopped");
@@ -370,11 +380,16 @@ void MainWindow::fadeInOutEx()
 void MainWindow::soundInfo(QString info)
 {
     ui->textBrowser->append(info);
+    if (debug && info.startsWith("debug"))
+    {
+        on_actionDebug_triggered();
+    }
 }
 
 void MainWindow::on_actionDebug_triggered()
 {
     debug = ui->actionDebug->isChecked();
+    mainloop.setDebug(debug);
     if (debug)
     {
         ui->graph2->setData(sd.bang, fmt.channelCount(), sd.bang.size());

@@ -8,13 +8,19 @@ MainLoop::MainLoop(Synchro  &syn, SoundData &data) : QThread(), synchro(syn), sd
 {
 }
 
+void MainLoop::setDebug(bool value)
+{
+    debug = value;
+}
+
 high_resolution_clock::time_point MainLoop::now()
 {
-     return high_resolution_clock::now();
+    return high_resolution_clock::now();
 }
 
 void MainLoop::run()
 {
+    synchro.setStopped(false);
 //        lo_address t = lo_address_new(oscIP, oscPort);
     for (int i = 0; !currentThread()->isInterruptionRequested(); i++)
     {
@@ -24,6 +30,7 @@ void MainLoop::run()
         if (debug) emit info("run " +QString::number(i + 1));
         if (i)
         {
+            if (debug) emit info("debug");
             if (compute() == 0)
             {
                 emit info("zero reference delay; measurement ignored.");
@@ -47,6 +54,7 @@ void MainLoop::run()
                 + " report: " + QString::number(dt3.count()));
         }
     }
+    synchro.setStopped(true);
 }
 
 int MainLoop::compute()

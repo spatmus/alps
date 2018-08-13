@@ -18,7 +18,12 @@ bool SoundDevice::start()
     m_inp->start(this);
     m_outp->start(this);
 
-    return m_outp->state() != QAudio::StoppedState;
+    if (m_outp->state() == QAudio::StoppedState)
+    {
+        m_error.sprintf("in %d out %d", m_inp->state(), m_outp->state());
+        return false;
+    }
+    return true;
 }
 
 void SoundDevice::stop()
@@ -39,7 +44,7 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     format.setSampleSize(16);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setSampleType(QAudioFormat::SignedInt);
+    format.setSampleType(QAudioFormat::Float);
 
     QAudioDeviceInfo di;
 
@@ -143,12 +148,6 @@ void SoundDevice::handleInStateChanged(QAudio::State newState)
 
 qint64 SoundDevice::readData(char *data, qint64 maxlen)
 {
-    for (qint64 i = 0; i < maxlen; i += sizeof (float))
-    {
-        *(float*)(data + i) = sd.ping.data()[i];
-    }
-    /*
-
     int ptr = synchro.getAudioPtr();
     long pOut = ptr * sd.channels;
     long long frames = sd.frames - ptr;
@@ -156,6 +155,12 @@ qint64 SoundDevice::readData(char *data, qint64 maxlen)
     {
         frames = maxlen;
     }
+    for (qint64 i = 0; i < frames; i += sizeof (float))
+    {
+        *(float*)(data + i) = sd.ping.data()[i + pOut];
+    }
+    /*
+
     if (ptr < sd.frames)
     {
         memcpy(data, sd.ping.data() + pOut, sizeof(float) * frames * sd.channels);

@@ -38,6 +38,8 @@ public:
     int ref_in  = 0;
     float qual  = QUALITY;
 
+    void setDebug(bool value);
+
 signals:
     void info(QString inf);
 
