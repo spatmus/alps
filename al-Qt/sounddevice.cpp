@@ -117,13 +117,12 @@ bool SoundDevice::select(QString name, QList<QAudioDeviceInfo> &all, QAudioDevic
 
 void SoundDevice::handleOutStateChanged(QAudio::State newState)
 {
-    emit info("Audio output state " + QString::number(newState));
-
+    // emit info("Audio output state " + QString::number(newState));
 }
 
 void SoundDevice::handleInStateChanged(QAudio::State newState)
 {
-    emit info("Audio input state " + QString::number(newState));
+    // emit info("Audio input state " + QString::number(newState));
     switch (newState) {
     case QAudio::StoppedState:
         if (m_inp->error() != QAudio::NoError)

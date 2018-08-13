@@ -27,13 +27,12 @@ void MainLoop::run()
         auto t0 = now();
         synchro.transferData(sd.frames);
         auto t1 = now();
-        if (debug) emit info("run " +QString::number(i + 1));
+        emit info("debug " + QString::number(i + 1));
         if (i)
         {
-            if (debug) emit info("debug");
             if (compute() == 0)
             {
-                emit info("zero reference delay; measurement ignored.");
+                // emit info("zero reference delay; measurement ignored.");
                 continue;
             }
         }

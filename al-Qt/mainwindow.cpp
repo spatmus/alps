@@ -381,10 +381,17 @@ void MainWindow::fadeInOutEx()
 
 void MainWindow::soundInfo(QString info)
 {
-    ui->textBrowser->append(info);
-    if (debug && info.startsWith("debug"))
+    if (info.startsWith("debug"))
     {
-        on_actionDebug_triggered();
+        if (debug)
+        {
+            on_actionDebug_triggered();
+            ui->statusBar->showMessage(info.mid(6));
+        }
+    }
+    else
+    {
+        ui->textBrowser->append(info);
     }
 }
 
