@@ -52,6 +52,7 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     if(select(adc, allIn, di))
     {
         m_adc = di.deviceName();
+        emit info(m_adc);
         m_inp = new QAudioInput(di, format, this);
     }
 
@@ -59,6 +60,7 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     if (select(dac, allOut, di))
     {
         m_dac = di.deviceName();
+        emit info(m_dac);
         format.setChannelCount(m_outputs = outputs);
         m_outp = new QAudioOutput(di, format, this);
     }
@@ -67,11 +69,11 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     {
         if (!m_inp)
         {
-            m_error = "Failed to open " + adc;
+            m_error = "Failed to open " + m_adc;
         }
         else if (!m_outp)
         {
-            m_error = "Failed to open " + dac;
+            m_error = "Failed to open " + m_dac;
         }
         delete m_inp;
         delete m_outp;

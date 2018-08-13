@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
     mainloop.setDebug(debug);
+    ui->actionDebug->setChecked(debug);
 
     qDebug() << QDir::currentPath();
 
@@ -138,6 +139,7 @@ void MainWindow::on_actionRun_toggled(bool active)
         }
         else
         {
+            ui->actionRun->setChecked(false);
             ui->statusBar->showMessage("Failed to start", 3000);
             ui->textBrowser->append(sound.error());
         }
