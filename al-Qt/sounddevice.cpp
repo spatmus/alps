@@ -41,7 +41,7 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     // Set up the format
     format.setSampleRate(sampling);
     format.setChannelCount(m_inputs = inputs);
-    format.setSampleSize(16);
+    format.setSampleSize(32);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
     format.setSampleType(QAudioFormat::Float);
