@@ -24,7 +24,11 @@ struct Synchro
     
     int getAudioPtr();
     void addAudioPtr(int add, int cnt);
-    
+
+    int audioPtrOut = 0;
+    int getAudioPtrOut() { return audioPtrOut; }
+    void addAudioPtrOut(int add);
+
     void transferData(int cnt);
     void allowCompute();
 

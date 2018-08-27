@@ -31,6 +31,11 @@ void Synchro::addAudioPtr(int add, int cnt)
     }
 }
 
+void Synchro::addAudioPtrOut(int add)
+{
+    audioPtrOut += add;
+}
+
 void Synchro::transferData(int cnt)
 {
     std::unique_lock<std::mutex> lck(mtx);
@@ -42,6 +47,7 @@ void Synchro::transferData(int cnt)
     }
     
     audioPtr = 0;
+    audioPtrOut = 0;
     // wait for notification from the audio thread
     while (!compute && !stopped)
     {

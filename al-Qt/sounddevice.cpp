@@ -149,29 +149,31 @@ void SoundDevice::handleInStateChanged(QAudio::State newState)
 
 qint64 SoundDevice::readData(char *data, qint64 maxlen)
 {
-    int ptr = synchro.getAudioPtr();
+    int ptr = synchro.getAudioPtrOut();
     long pOut = ptr * sd.channels;
     long long frames = sd.frames - ptr;
-    if (frames > maxlen)
+    int nf = maxlen / sizeof(float) / sd.channels;
+    if (frames > nf)
     {
-        frames = maxlen;
+        frames = nf;
     }
+    /*
     for (qint64 i = 0; i < frames; i += sizeof (float))
     {
         *(float*)(data + i) = sd.ping.data()[i + pOut];
     }
-    /*
+    */
 
     if (ptr < sd.frames)
     {
         memcpy(data, sd.ping.data() + pOut, sizeof(float) * frames * sd.channels);
+        synchro.addAudioPtrOut(frames);
         return maxlen;
     }
     else
     {
         memset(data, 0, maxlen);
     }
-    */
     return maxlen;
 }
 
@@ -187,9 +189,10 @@ qint64 SoundDevice::writeData(const char *data, qint64 len)
     if (ptr < sd.frames)
     {
         long long frames = sd.frames - ptr;
-        if (frames > len)
+        int nf = len / sizeof(float) / m_inputs;
+        if (frames > nf)
         {
-            frames = len;
+            frames = nf;
         }
         long pIn = ptr * m_inputs;
         memcpy(sd.pong.data() + pIn, data, sizeof(float) * frames * m_inputs);

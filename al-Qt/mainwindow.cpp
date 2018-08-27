@@ -47,7 +47,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::initSound()
 {
-    if (!sound.selectDevices(adcIn, dacOut, mainloop.inputs, mainloop.outputs, SAMPLE_RATE))
+    if (!sound.selectDevices(adcIn, dacOut, mainloop.inputs, mainloop.outputs, sampling))
     {
         ui->actionRun->setEnabled(false);
     }
@@ -74,13 +74,21 @@ void MainWindow::loadWave()
                                     + " != " + QString::number(fmt.channelCount()));
         }
 
-        float dur = (float)sd.frames / SAMPLE_RATE;
+        sampling = fmt.sampleRate();
+        if (sampling != SAMPLE_RATE_)
+        {
+            ui->textBrowser->append("WARNING Sampling rate " +
+                                    QString::number(sampling)
+                                    + " != " + QString::number(SAMPLE_RATE_));
+        }
+
+        float dur = (float)sd.frames / sampling;
         if (dur > duration)
         {
             dur = duration;
         }
         // the part of used sound might be shorter than everything loaded from file
-        sd.frames = dur * SAMPLE_RATE;
+        sd.frames = dur * sampling;
         sd.szOut = sd.frames * sd.channels;
         sd.szIn = sd.frames * mainloop.inputs;
         sd.pong.resize(sd.szIn);
@@ -346,13 +354,13 @@ void MainWindow::fadeInOutEx()
     }
 
     int nch = sd.channels;
-    long pls = pulsems / 1000.0 * SAMPLE_RATE;
-    long pau = pausems / 1000.0 * SAMPLE_RATE;
+    long pls = pulsems / 1000.0 * sampling;
+    long pau = pausems / 1000.0 * sampling;
     long period = pls + pau;
     long cnt = sd.frames;
     for (int ch = 0; ch < nch; ch++)
     {
-        long offset = offsets[ch] / 1000.0 * SAMPLE_RATE;
+        long offset = offsets[ch] / 1000.0 * sampling;
         zeroChannel(ch, 0, offset);
 
         if (debug)
@@ -365,7 +373,7 @@ void MainWindow::fadeInOutEx()
             long end = offset + pls;
             if (end >= cnt) end = cnt - 1;
             // if (debug) cout << "ch " << ch << " pls " << i << " ofs " << offset << " end " << end << endl;
-            pulseChannel(ch, fadems / 1000.0 * SAMPLE_RATE, offset, end);
+            pulseChannel(ch, fadems / 1000.0 * sampling, offset, end);
             long end2 = end + pau;
             if (end2 > cnt) end2 = cnt;
             zeroChannel(ch, end, end2);
