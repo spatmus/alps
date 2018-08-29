@@ -7,30 +7,45 @@ QString SoundDevice::error() const
     return m_error;
 }
 
-SoundDevice::SoundDevice(Synchro &syn, SoundData &data) : synchro(syn), sd(data)
+SoundPlayer::SoundPlayer(Synchro  &syn, SoundData &data) :
+    synchro(syn), sd(data)
 {
 
+}
+
+SoundDevice::SoundDevice(Synchro &syn, SoundData &data) :
+    player(syn, data), synchro(syn), sd(data)
+{
+
+}
+
+bool SoundPlayer::start()
+{
+    open(QIODevice::ReadOnly);
+    m_outp->start(this);
+
+    return m_outp->state() != QAudio::StoppedState;
+}
+
+void SoundPlayer::stop()
+{
+    m_outp->stop();
+    close();
 }
 
 bool SoundDevice::start()
 {
     open(QIODevice::ReadWrite);
     m_inp->start(this);
-    m_outp->start(this);
 
-    if (m_outp->state() == QAudio::StoppedState)
-    {
-        m_error.sprintf("in %d out %d", m_inp->state(), m_outp->state());
-        return false;
-    }
-    return true;
+    return player.start();
 }
 
 void SoundDevice::stop()
 {
     m_inp->stop();
-    m_outp->stop();
     close();
+    player.stop();
 }
 
 bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int outputs, int sampling)
@@ -40,11 +55,11 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     QAudioFormat format;
     // Set up the format
     format.setSampleRate(sampling);
-    format.setChannelCount(m_inputs = inputs);
-    format.setSampleSize(32);
     format.setCodec("audio/pcm");
     format.setByteOrder(QAudioFormat::LittleEndian);
-    format.setSampleType(QAudioFormat::Float);
+    format.setChannelCount(m_inputs = inputs);
+    format.setSampleSize(16);
+    format.setSampleType(QAudioFormat::SignedInt);
 
     QAudioDeviceInfo di;
 
@@ -52,42 +67,50 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
     if(select(adc, allIn, di))
     {
         m_adc = di.deviceName();
-        emit info(m_adc);
-        m_inp = new QAudioInput(di, format, this);
+        if (di.isFormatSupported(format))
+        {
+            emit info(m_adc + ", " + QString::number(format.bytesPerFrame()) + " bytes per frame");
+            m_inp = new QAudioInput(di, format, this);
+        }
+        else
+        {
+            emit info("Not supported by " + m_adc + ": " + format.codec());
+        }
     }
 
     QList<QAudioDeviceInfo> allOut = QAudioDeviceInfo::availableDevices(QAudio::Mode::AudioOutput);
     if (select(dac, allOut, di))
     {
         m_dac = di.deviceName();
-        emit info(m_dac);
         format.setChannelCount(m_outputs = outputs);
-        m_outp = new QAudioOutput(di, format, this);
+        if (di.isFormatSupported(format))
+        {
+            emit info(m_dac + ", " + QString::number(format.bytesPerFrame()) + " bytes per frame");
+            player.m_outp = new QAudioOutput(di, format, this);
+        }
+        else
+        {
+            emit info("Not supported by " + m_dac + ": " + format.codec());
+        }
     }
 
-    if (!m_inp || !m_outp)
+    if (!m_inp || !player.m_outp)
     {
         if (!m_inp)
         {
             m_error = "Failed to open " + m_adc;
         }
-        else if (!m_outp)
+        else if (!player.m_outp)
         {
             m_error = "Failed to open " + m_dac;
         }
         delete m_inp;
-        delete m_outp;
+        delete player.m_outp;
         m_inp = nullptr;
-        m_outp = nullptr;
+        player.m_outp = nullptr;
+        return false;
     }
-    else
-    {
-        connect(m_inp, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleInStateChanged(QAudio::State)));
-        connect(m_outp, SIGNAL(stateChanged(QAudio::State)), this, SLOT(handleOutStateChanged(QAudio::State)));
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 bool SoundDevice::select(QString name, QList<QAudioDeviceInfo> &all, QAudioDeviceInfo &dinfo)
@@ -115,66 +138,25 @@ bool SoundDevice::select(QString name, QList<QAudioDeviceInfo> &all, QAudioDevic
     return !dname.isEmpty();
 }
 
-void SoundDevice::handleOutStateChanged(QAudio::State newState)
-{
-    // emit info("Audio output state " + QString::number(newState));
-}
-
-void SoundDevice::handleInStateChanged(QAudio::State newState)
-{
-    // emit info("Audio input state " + QString::number(newState));
-    switch (newState) {
-    case QAudio::StoppedState:
-        if (m_inp->error() != QAudio::NoError)
-        {
-            emit info("Audio input error " + QString::number(m_inp->error()));
-            // Error handling
-        } else {
-            emit info("Stopped recording");
-            // Finished recording
-        }
-        break;
-
-    case QAudio::ActiveState:
-        // Started recording - read from IO device
-        emit info("Starting recording");
-
-        break;
-
-    default:
-        // ... other cases as appropriate
-        break;
-    }
-}
-
-qint64 SoundDevice::readData(char *data, qint64 maxlen)
+qint64 SoundPlayer::readData(char *data, qint64 maxlen)
 {
     int ptr = synchro.getAudioPtrOut();
-    long pOut = ptr * sd.channels;
-    long long frames = sd.frames - ptr;
-    int nf = maxlen / sizeof(float) / sd.channels;
-    if (frames > nf)
-    {
-        frames = nf;
-    }
-    /*
-    for (qint64 i = 0; i < frames; i += sizeof (float))
-    {
-        *(float*)(data + i) = sd.ping.data()[i + pOut];
-    }
-    */
-
+    memset(data, 0, maxlen);
     if (ptr < sd.frames)
     {
-        memcpy(data, sd.ping.data() + pOut, sizeof(float) * frames * sd.channels);
+        long long frames = sd.frames - ptr;
+        int nf = maxlen / sizeof(short) / sd.channels;
+        if (frames > nf)
+        {
+            frames = nf;
+        }
+
+        long pOut = ptr * sd.channels;
+        memcpy(data, sd.ping.data() + pOut, sizeof(short) * frames * sd.channels);
         synchro.addAudioPtrOut(frames);
         return maxlen;
     }
-    else
-    {
-        memset(data, 0, maxlen);
-    }
-    return maxlen;
+    return 0;
 }
 
 qint64 SoundDevice::writeData(const char *data, qint64 len)
@@ -182,21 +164,21 @@ qint64 SoundDevice::writeData(const char *data, qint64 len)
     int ptr = synchro.getAudioPtr();
     if (ptr == 0)
     {
-        memcpy(sd.bang.data(), sd.pong.data(), sizeof(float) * sd.szIn);
+        memcpy(sd.bang.data(), sd.pong.data(), sizeof(short) * sd.szIn);
         synchro.allowCompute();
     }
 
     if (ptr < sd.frames)
     {
         long long frames = sd.frames - ptr;
-        int nf = len / sizeof(float) / m_inputs;
+        int nf = len / sizeof(short) / m_inputs;
         if (frames > nf)
         {
             frames = nf;
         }
         long pIn = ptr * m_inputs;
-        memcpy(sd.pong.data() + pIn, data, sizeof(float) * frames * m_inputs);
-        synchro.addAudioPtr((int)frames, sd.frames);
+        memcpy(sd.pong.data() + pIn, data, sizeof(short) * frames * m_inputs);
+        synchro.addAudioPtr(frames, sd.frames);
     }
     return len;
 }

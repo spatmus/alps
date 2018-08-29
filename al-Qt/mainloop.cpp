@@ -27,7 +27,6 @@ void MainLoop::run()
         auto t0 = now();
         synchro.transferData(sd.frames);
         auto t1 = now();
-        emit info("debug " + QString::number(i + 1));
         if (i)
         {
             if (compute() == 0)
@@ -48,7 +47,8 @@ void MainLoop::run()
             duration<double> dt2 = duration_cast<duration<double>>(t2 - t1);
             duration<double> dt3 = duration_cast<duration<double>>(t3 - t2);
 
-            emit info("wait: " + QString::number(dt1.count())
+            emit info("debug " + QString::number(i + 1)
+                + " wait: " + QString::number(dt1.count())
                 + " compute: " + QString::number(dt2.count())
                 + " report: " + QString::number(dt3.count()));
         }
@@ -60,7 +60,7 @@ int MainLoop::compute()
 {
     memset(delays, 0, sizeof(delays));
     int num = sd.channels; // output channels
-    float *res = new float[sd.frames];
+    std::vector<float> res(sd.frames);
     for (int n = 0; n < num; n++)
     {
         for (int inp = 0; inp < inputs; inp++)
@@ -68,8 +68,8 @@ int MainLoop::compute()
             // don't compute correlation of reference input with non-reference speakers
             if (inp == ref_in && n != ref_out) continue;
 
-            xcorr(n, inp, res);
-            int idx = findMaxAbs(res, (int)sd.frames);
+            xcorr(n, inp, res.data());
+            int idx = findMaxAbs(res.data(), (int)sd.frames);
             QString ok = " good";
             if (fabs(res[idx]) >= qual)
             {
@@ -98,8 +98,6 @@ int MainLoop::compute()
             delays[n][inp] -= md;
         }
     }
-
-    delete [] res;
     return md;
 }
 
@@ -135,8 +133,8 @@ void MainLoop::xcorr(int refChannel, int sigChannel, float * res)
     int ch = sd.channels;
     for (int i = 0; i < sz; i++)
     {
-        x[i] = sd.ping[i * ch + refChannel];
-        y[i] = sd.bang[i * inputs + sigChannel];
+        x[i] = sd.ping[i * ch + refChannel] / 32768.0;
+        y[i] = sd.bang[i * inputs + sigChannel] / 32768.0;
     }
     alglib::corrr1dcircular(y, sz, x, sz, r);
     for (int i = 0; i < sz; i++)

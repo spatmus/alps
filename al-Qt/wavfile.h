@@ -9,13 +9,13 @@ class WavFile : public QFile
 public:
     WavFile(QObject *parent = nullptr);
 
-    bool load(const QString &fileName, std::vector<float> &samples);
+    bool load(const QString &fileName, std::vector<short> &samples);
     const QAudioFormat &fileFormat() const;
     qint64 headerLength() const;
 
 private:
     bool readHeader();
-    bool readSamples(std::vector<float> &samples);
+    bool readSamples(std::vector<short> &samples);
 
 private:
     QAudioFormat m_fileFormat;

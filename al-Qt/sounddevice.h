@@ -10,13 +10,38 @@
 struct SoundData {
     long                    szIn;
     long                    szOut;
-    std::vector<float>      ping;
-    std::vector<float>      pong;
-    std::vector<float>      bang;
+    std::vector<short>      ping;
+    std::vector<short>      pong;
+    std::vector<short>      bang;
 
     int                     channels;
     int                     frames;
     int                     empty;
+};
+
+class SoundPlayer : public QIODevice
+{
+    Q_OBJECT
+
+    QString m_adc;
+    Synchro         &synchro;
+    SoundData       &sd;
+
+public:
+    SoundPlayer(Synchro  &syn, SoundData &data);
+    virtual ~SoundPlayer() override { }
+
+    bool start();
+    void stop();
+
+    QAudioOutput    *m_outp = nullptr;
+    virtual qint64 readData(char *data, qint64 maxlen) override;
+    virtual qint64 writeData(const char *data, qint64 len) override
+    {
+        Q_UNUSED(data);
+        Q_UNUSED(len);
+        return 0;
+    }
 };
 
 class SoundDevice : public QIODevice
@@ -30,7 +55,7 @@ class SoundDevice : public QIODevice
     QString m_error = "Not initialized";
 
     QAudioInput     *m_inp = nullptr;
-    QAudioOutput    *m_outp = nullptr;
+    SoundPlayer     player;
 
     Synchro         &synchro;
     SoundData       &sd;
@@ -41,18 +66,22 @@ public:
     SoundDevice(Synchro  &syn, SoundData &data);
     virtual ~SoundDevice() override { }
 
-    virtual qint64 readData(char *data, qint64 maxlen) override;
+    virtual qint64 readData(char *data, qint64 maxlen) override
+    {
+        Q_UNUSED(data);
+        Q_UNUSED(maxlen);
+        return 0;
+    }
+
     virtual qint64 writeData(const char *data, qint64 len) override;
+
+    bool debug = false;
 
     bool start();
     void stop();
 
     bool selectDevices(QString adc, QString dac, int inputs, int outputs, int sampling);
     QString error() const;
-
-private slots:
-    void handleInStateChanged(QAudio::State newState);
-    void handleOutStateChanged(QAudio::State newState);
 
 signals:
     void info(QString inf);

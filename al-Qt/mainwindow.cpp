@@ -139,6 +139,7 @@ void MainWindow::on_actionRun_toggled(bool active)
     {
         if (sound.start())
         {
+            sound.debug = debug;
             ui->textBrowser->clear();
             ui->actionRun->setText("Stop");
             ui->actionRun->setIcon(QIcon(":/images/images/player_stop.png"));
@@ -407,6 +408,7 @@ void MainWindow::on_actionDebug_triggered()
 {
     debug = ui->actionDebug->isChecked();
     mainloop.setDebug(debug);
+    sound.debug = debug;
     if (debug)
     {
         ui->graph2->setData(sd.bang, fmt.channelCount(), sd.bang.size());

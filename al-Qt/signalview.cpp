@@ -6,6 +6,16 @@ SignalView::SignalView(QWidget *parent) : QWidget(parent)
 
 }
 
+
+
+void SignalView::setData(std::vector<short> &src, quint32 nch, qint32 dur)
+{
+    std::vector<float> ff;
+    ff.assign(src.begin(), src.end());
+    m_range = 32768.0;
+    setData(ff, nch, dur);
+}
+
 void SignalView::setData(std::vector<float> &src, quint32 nch, qint32 dur)
 {
     m_nch = nch;
@@ -49,7 +59,7 @@ void SignalView::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setPen(Qt::black);
     float scx = (float)width() / dim;
-    float scy = (float)height() / m_nch / 2;
+    float scy = (float)height() / m_nch / 2 / m_range;
     for (quint32 ch = 0; ch < m_nch; ch++)
     {
         painter.drawRect(rrect);

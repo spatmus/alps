@@ -85,7 +85,7 @@ WavFile::WavFile(QObject *parent)
 
 }
 
-bool WavFile::load(const QString &fileName, std::vector<float> &samples)
+bool WavFile::load(const QString &fileName, std::vector<short> &samples)
 {
     close();
     setFileName(fileName);
@@ -152,29 +152,19 @@ bool WavFile::readHeader()
     return result;
 }
 
-bool WavFile::readSamples(std::vector<float> &samples)
+bool WavFile::readSamples(std::vector<short> &samples)
 {
-    qint64 readLen = size() - headerLength();
-    quint32 loaded = 0;
-    std::vector<char> tmp(readLen);
-    if (seek(headerLength()))
-    {
-        loaded = read(tmp.data(), readLen);
-        qDebug() << "audio FileSize " << size() << "readLen " << readLen << " loaded " << loaded;
-    }
-
-    if (m_fileFormat.sampleSize() == 16)
-    {
-        samples.resize(loaded /= 2);
-        for (quint32 i = 0; i < loaded; i++)
-        {
-            samples[i] = ((qint16*)tmp.data())[i] / 32768.0f;
-        }
-    }
-    else
+    if (m_fileFormat.sampleSize() != 16)
     {
         return false;
     }
-
+    qint64 readLen = size() - headerLength();
+    samples.resize(readLen / 2);
+    quint32 loaded = 0;
+    if (seek(headerLength()))
+    {
+        loaded = read((char*)samples.data(), readLen);
+        qDebug() << "audio FileSize " << size() << "readLen " << readLen << " loaded " << loaded;
+    }
     return true;
 }
