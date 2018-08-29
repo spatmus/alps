@@ -130,7 +130,8 @@ void MainWindow::on_actionAbout_triggered()
 
     QMessageBox::information(this, QApplication::applicationName(),
                              QApplication::organizationName() + QString::fromWCharArray(L" \u00a9 2018\n")
-                             + "Build: " + built);
+                             + "Build: " + built
+                             + "\nData " + sd.toString());
 }
 
 void MainWindow::on_actionRun_toggled(bool active)

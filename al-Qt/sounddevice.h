@@ -17,6 +17,16 @@ struct SoundData {
     int                     channels;
     int                     frames;
     int                     empty;
+
+    QString toString()
+    {
+        return QString::number(frames) + " frames; "
+                + QString::number(szIn) + " size IN; "
+                + QString::number(szOut) + " size OUT; "
+                + QString::number(ping.size()) + " ping; "
+                + QString::number(pong.size()) + " pong; "
+                + QString::number(channels) + " channels";
+    }
 };
 
 class SoundPlayer : public QIODevice
