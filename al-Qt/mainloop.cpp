@@ -221,6 +221,7 @@ static QByteArray tosc_vwrite(const char *address, const char *format, va_list a
 {
     QByteArray buffer;
     buffer.resize(2048);
+    memset(buffer.data(), 0, 2048);
     strcpy(buffer.data(), address);
     quint32 i = strlen(address);
     i = (i + 4) & ~0x3;
