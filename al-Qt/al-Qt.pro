@@ -89,3 +89,5 @@ win32: RC_FILE = icon.rc
 DISTFILES += \
     icon.ico \
     icon.rc
+
+win32: LIBS += -lws2_32

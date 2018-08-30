@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow),
     speakers(50),
     sound(synchro, sd),
-    mainloop(synchro, sd)
+    mainloop(synchro, sd, speakers)
 {
     QLocale::setDefault(QLocale::English);
 
@@ -47,7 +47,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::initSound()
 {
-    if (!sound.selectDevices(adcIn, dacOut, mainloop.inputs, mainloop.outputs, sampling))
+    if (!sound.selectDevices(adcIn, dacOut, mainloop.inputs, mainloop.outputs, mainloop.sampling))
     {
         ui->actionRun->setEnabled(false);
     }
@@ -74,21 +74,21 @@ void MainWindow::loadWave()
                                     + " != " + QString::number(fmt.channelCount()));
         }
 
-        sampling = fmt.sampleRate();
-        if (sampling != SAMPLE_RATE_)
+        mainloop.sampling = fmt.sampleRate();
+        if (mainloop.sampling != SAMPLE_RATE_)
         {
             ui->textBrowser->append("WARNING Sampling rate " +
-                                    QString::number(sampling)
+                                    QString::number(mainloop.sampling)
                                     + " != " + QString::number(SAMPLE_RATE_));
         }
 
-        float dur = (float)sd.frames / sampling;
+        float dur = (float)sd.frames / mainloop.sampling;
         if (dur > duration)
         {
             dur = duration;
         }
         // the part of used sound might be shorter than everything loaded from file
-        sd.frames = dur * sampling;
+        sd.frames = dur * mainloop.sampling;
         sd.szOut = sd.frames * sd.channels;
         sd.szIn = sd.frames * mainloop.inputs;
         sd.pong.resize(sd.szIn);
@@ -219,13 +219,11 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
             else if (ss[0] == "oscIP")
             {
-                oscIP = ss[1].trimmed();
-                qDebug() << "oscIP " << oscIP;
+                mainloop.oscIP = ss[1].trimmed();
             }
             else if (ss[0] == "oscPort")
             {
-                oscPort = ss[1].toInt();
-                qDebug() << "oscPort " << oscPort;
+                mainloop.oscPort = ss[1];
             }
             else if (ss[0] == "adcIn")
             {
@@ -259,8 +257,8 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
             else if (ss[0] == "autopan")
             {
-                autopan = ss[1].toInt() != 0;
-                qDebug() << "autopan " << autopan;
+                mainloop.autopan = ss[1].toInt() != 0;
+                qDebug() << "autopan " << mainloop.autopan;
             }
             else if (ss[0] ==  "fadems")
             {
@@ -356,13 +354,13 @@ void MainWindow::fadeInOutEx()
     }
 
     int nch = sd.channels;
-    long pls = pulsems / 1000.0 * sampling;
-    long pau = pausems / 1000.0 * sampling;
+    long pls = pulsems / 1000.0 * mainloop.sampling;
+    long pau = pausems / 1000.0 * mainloop.sampling;
     long period = pls + pau;
     long cnt = sd.frames;
     for (int ch = 0; ch < nch; ch++)
     {
-        long offset = offsets[ch] / 1000.0 * sampling;
+        long offset = offsets[ch] / 1000.0 * mainloop.sampling;
         zeroChannel(ch, 0, offset);
 
         if (debug)
@@ -375,7 +373,7 @@ void MainWindow::fadeInOutEx()
             long end = offset + pls;
             if (end >= cnt) end = cnt - 1;
             // if (debug) cout << "ch " << ch << " pls " << i << " ofs " << offset << " end " << end << endl;
-            pulseChannel(ch, fadems / 1000.0 * sampling, offset, end);
+            pulseChannel(ch, fadems / 1000.0 * mainloop.sampling, offset, end);
             long end2 = end + pau;
             if (end2 > cnt) end2 = cnt;
             zeroChannel(ch, end, end2);

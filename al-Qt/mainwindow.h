@@ -16,7 +16,6 @@ class MainWindow;
 
 #define DURATION    0.5
 #define ADC_INPUTS  2
-#define SAMPLE_RATE_ 96000
 #define REPEAT      20
 #define OSC_IP      "192.168.1.4"
 #define OSC_PORT    7770
@@ -66,14 +65,7 @@ private:
     QString recname = "record.wav";
     QString pulsename = "pulses.wav";
 
-    QString oscIP = OSC_IP;
-    int oscPort = OSC_PORT;
-    // ofxOscSender osc;
-
     double duration = DURATION;
-    qint32 sampling = SAMPLE_RATE_;
-
-    bool autopan = false;
     bool debug = false;
     bool run = false;
 

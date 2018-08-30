@@ -1,10 +1,13 @@
 #include "mainloop.h"
 #include <chrono>
 #include "../alglib/src/fasttransforms.h"
+#include <QUdpSocket>
+#include <QtEndian>
 
 using namespace std::chrono;
 
-MainLoop::MainLoop(Synchro  &syn, SoundData &data) : QThread(), synchro(syn), sd(data)
+MainLoop::MainLoop(Synchro  &syn, SoundData &data, Speakers &spe) :
+    QThread(), synchro(syn), sd(data), speakers(spe)
 {
 }
 
@@ -21,7 +24,6 @@ high_resolution_clock::time_point MainLoop::now()
 void MainLoop::run()
 {
     synchro.setStopped(false);
-//        lo_address t = lo_address_new(oscIP, oscPort);
     for (int i = 0; !currentThread()->isInterruptionRequested(); i++)
     {
         auto t0 = now();
@@ -103,7 +105,78 @@ int MainLoop::compute()
 
 void MainLoop::report()
 {
+    char lbl[40]; // for OSC messages
+    for (int inp = 0; inp < inputs; inp++)
+    {
+        // for all microphones except reference one
+        if (inp == ref_in) continue;
+//        cout << "input:" << inp << endl;
 
+        // report all distances
+        for (int n = 0; n < sd.channels; n++)
+        {
+            double d = (double)delays[n][inp] / sampling * 330;
+            if (!speakers.distOk(d, n, autopan ? 0 : speakers.getCoordinates(n).z)) continue;
+
+            sprintf(lbl, "/mic%d", inp + 1);
+            sendOsc(lbl, "if", n + 1, d);
+        }
+
+        if (autopan) continue;
+
+        float X = 0, Y = 0;
+        int averNum = 0;
+        // for all speaker pairs
+        for (int i = 0; i < speakers.numPairs(); i++)
+        {
+            int n = speakers.getPair(i).one.id;
+            int m = speakers.getPair(i).two.id;
+            if (n >= sd.channels || m >= sd.channels)
+            {
+                // cout << "ERROR: The speaker pair (" << n << "," << m << ") cannot be used" << endl;
+                continue;
+            }
+
+            double d1 = (double)delays[n][inp] / sampling * 330;
+            double d2 = (double)delays[m][inp] / sampling * 330;
+            double z1 = speakers.getCoordinates(n).z;
+            double z2 = speakers.getCoordinates(m).z;
+
+//            if (debug) cout << "speakers (" << n << "," << m << ") dist (" << d1 << "," << d2 << ") z (" << z1 << "," << z2 << ")" << endl;
+
+            if (!speakers.distOk(d1, n, z1)) continue;
+            if (!speakers.distOk(d2, m, z2)) continue;
+
+            double x, y;
+            if (speakers.distToXY(d1, d2, n, m, &x, &y))
+            {
+                // cout << "speakers (" << n << "," << m << ") dist (" << d1 << "," << d2 << ") x: " << x << " y: " << y << endl;
+                X += x;
+                Y += y;
+                averNum++;
+            }
+            else
+            {
+                // if (debug) cout << "no result" << endl;
+            }
+        }
+        if (averNum)
+        {
+            X /= averNum;
+            Y /= averNum;
+            // cout << "position estimate for mic " << inp <<
+            //    " x=" << X << " y=" << Y << " (" << averNum << ")" << endl;
+
+            sprintf(lbl, "/position%d", inp + 1);
+            sendOsc(lbl, "ff", X, Y);
+        }
+        else
+        {
+            // cout << "no estimates for mic " << inp << endl;
+            sprintf(lbl, "/noestimate%d", inp + 1);
+            sendOsc(lbl, "");
+        }
+    }
 }
 
 int MainLoop::findMaxAbs(float *d, int sz)
@@ -141,4 +214,72 @@ void MainLoop::xcorr(int refChannel, int sigChannel, float * res)
     {
         res[i] = r[i];
     }
+}
+
+// always writes a multiple of 4 bytes
+static QByteArray tosc_vwrite(const char *address, const char *format, va_list ap)
+{
+    QByteArray buffer;
+    buffer.resize(2048);
+    strcpy(buffer.data(), address);
+    quint32 i = strlen(address);
+    i = (i + 4) & ~0x3;
+    buffer[i++] = ',';
+    int s_len = (int) strlen(format);
+    strcpy(buffer.data() + i, format);
+    i = (i + 4 + s_len) & ~0x3;
+
+    for (int j = 0; format[j] != '\0'; ++j)
+    {
+        switch (format[j])
+        {
+            case 'f':
+            {
+                const float f = (float) va_arg(ap, double);
+                *((quint32*) (buffer.data() + i)) = qToBigEndian<quint32>(*(quint32*) &f);
+                i += 4;
+                break;
+            }
+            case 'd':
+            {
+                const double f = (double) va_arg(ap, double);
+                *((quint64*) (buffer.data() + i)) = qToBigEndian<quint64>(*((quint64 *) &f));
+                i += 8;
+                break;
+            }
+            case 'i':
+            {
+                const quint32 k = (quint32) va_arg(ap, int);
+                *((uint32_t *) (buffer.data() + i)) = qToBigEndian<quint32>(k);
+                i += 4;
+                break;
+            }
+            case 's':
+            {
+                const char *str = (const char *) va_arg(ap, void *);
+                s_len = (int) strlen(str);
+                strcpy(buffer.data() + i, str);
+                i = (i + 4 + s_len) & ~0x3;
+                break;
+            }
+            case 'T': // true
+            case 'F': // false
+            case 'N': // nil
+            case 'I': // infinitum
+                break;
+         }
+    }
+    buffer.resize(i);
+    return buffer;
+}
+
+void MainLoop::sendOsc(const char *address, const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    QByteArray datagram = tosc_vwrite(address, fmt, ap);
+    va_end(ap);
+
+    QUdpSocket udp;
+    udp.writeDatagram(datagram, QHostAddress(oscIP), oscPort.toInt());
 }
