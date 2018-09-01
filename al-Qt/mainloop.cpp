@@ -38,9 +38,11 @@ void MainLoop::run()
             }
         }
         auto t2 = now();
+        QString rep = "No result";
         if (i)
         {
-            report();
+            QString r = report();
+            if (!r.isEmpty()) rep = r;
         }
         auto t3 = now();
         if (debug)
@@ -53,6 +55,10 @@ void MainLoop::run()
                 + " wait: " + QString::number(dt1.count())
                 + " compute: " + QString::number(dt2.count())
                 + " report: " + QString::number(dt3.count()));
+        }
+        else
+        {
+            emit info("debug " + rep);
         }
     }
     synchro.setStopped(true);
@@ -92,7 +98,7 @@ int MainLoop::compute()
     // One input channel is used for latency correction.
     // It is electrically connected to one output.
     int md = delays[ref_out][ref_in];
-    emit info("reference delay " + QString::number(md));
+    if (debug) emit info("reference delay " + QString::number(md));
     for (int n = 0; n < num; n++)
     {
         for (int inp = 0; inp < inputs; inp++)
@@ -103,9 +109,10 @@ int MainLoop::compute()
     return md;
 }
 
-void MainLoop::report()
+QString MainLoop::report()
 {
     char lbl[40]; // for OSC messages
+    QString rep;
     for (int inp = 0; inp < inputs; inp++)
     {
         // for all microphones except reference one
@@ -124,7 +131,7 @@ void MainLoop::report()
 
         if (autopan) continue;
 
-        float X = 0, Y = 0;
+        double X = 0, Y = 0;
         int averNum = 0;
         // for all speaker pairs
         for (int i = 0; i < speakers.numPairs(); i++)
@@ -164,9 +171,9 @@ void MainLoop::report()
         {
             X /= averNum;
             Y /= averNum;
-            // cout << "position estimate for mic " << inp <<
-            //    " x=" << X << " y=" << Y << " (" << averNum << ")" << endl;
-
+            QString r;
+            r.sprintf("mic %i x=%4.2lf  y=%4.2lf ", X, Y);
+            rep += r;
             sprintf(lbl, "/position%d", inp + 1);
             sendOsc(lbl, "ff", X, Y);
         }
@@ -177,6 +184,11 @@ void MainLoop::report()
             sendOsc(lbl, "");
         }
     }
+    if (!rep.isEmpty())
+    {
+        emit info("debug " + rep);
+    }
+    return rep;
 }
 
 int MainLoop::findMaxAbs(float *d, int sz)

@@ -56,8 +56,6 @@ void MainWindow::initSound()
 
 void MainWindow::loadWave()
 {
-    //    connect(&loader, SIGNAL(done()), this, SLOT(loaded()));
-    //    loader.readFile(fname);
     WavFile wf;
     if (wf.load(fname, sd.ping))
     {
@@ -82,7 +80,7 @@ void MainWindow::loadWave()
                                     + " != " + QString::number(SAMPLE_RATE_));
         }
 
-        float dur = (float)sd.frames / mainloop.sampling;
+        double dur = (double)sd.frames / mainloop.sampling;
         if (dur > duration)
         {
             dur = duration;
@@ -91,6 +89,8 @@ void MainWindow::loadWave()
         sd.frames = dur * mainloop.sampling;
         sd.szOut = sd.frames * sd.channels;
         sd.szIn = sd.frames * mainloop.inputs;
+
+        sd.ping.resize(sd.frames * sd.channels);
         sd.pong.resize(sd.szIn);
         sd.bang.resize(sd.szIn);
         fadeInOutEx();

@@ -26,7 +26,7 @@ class MainLoop : public QThread
     void xcorr(int refChannel, int sigChannel, float * res);
     int findMaxAbs(float *d, int sz);
     int compute(); // returns reference delay in samples
-    void report();
+    QString report();
     void sendOsc(const char *address, const char *fmt, ...);
 
     // the measurement result
