@@ -58,7 +58,7 @@ void MainLoop::run()
         }
         else
         {
-            emit info("debug " + rep);
+            emit info("debug " + QString::number(i + 1) + " " + rep);
         }
     }
     synchro.setStopped(true);
@@ -112,7 +112,7 @@ int MainLoop::compute()
 QString MainLoop::report()
 {
     char lbl[40]; // for OSC messages
-    QString rep;
+    QString rep, rep2;
     for (int inp = 0; inp < inputs; inp++)
     {
         // for all microphones except reference one
@@ -127,6 +127,9 @@ QString MainLoop::report()
 
             sprintf(lbl, "/mic%d", inp + 1);
             sendOsc(lbl, "if", n + 1, d);
+            QString r;
+            r.sprintf("mic %i sp %i dist %.2lf;", inp + 1, n + 1, d);
+            rep2 += r;
         }
 
         if (autopan) continue;
@@ -184,11 +187,7 @@ QString MainLoop::report()
             sendOsc(lbl, "");
         }
     }
-    if (!rep.isEmpty())
-    {
-        emit info("debug " + rep);
-    }
-    return rep;
+    return rep.isNull() ? rep2 : rep;
 }
 
 int MainLoop::findMaxAbs(float *d, int sz)
