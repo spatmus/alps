@@ -1,5 +1,6 @@
 #include "signalview.h"
 #include <QPainter>
+#include "mainloop.h"
 
 SignalView::SignalView(QWidget *parent) : QWidget(parent)
 {
@@ -8,21 +9,28 @@ SignalView::SignalView(QWidget *parent) : QWidget(parent)
 
 
 
-void SignalView::setData(std::vector<short> &src, quint32 nch, qint32 dur)
+void SignalView::setData(const std::vector<short> &src, quint32 nch, qint32 dur)
 {
     std::vector<float> ff;
     ff.assign(src.begin(), src.end());
     m_range = 32768.0;
-    setData(ff, nch, dur);
+    setData(ff.data(), ff.size(), nch, dur);
 }
 
-void SignalView::setData(std::vector<float> &src, quint32 nch, qint32 dur)
+void SignalView::setData(const float *src, int size, quint32 nch, qint32 dur)
 {
     m_nch = nch;
     if (!m_nch) return;
+
+    if (dur < 0)
+    {
+        int idx = MainLoop::findMaxAbs(src, size);
+        m_range = fabs(src[idx]);
+    }
+
     top.resize(dim * m_nch);
     bottom.resize(dim * m_nch);
-    quint32 sz = src.size() / m_nch;
+    quint32 sz = size / m_nch;
     float scale = (float)dim / sz;
     m_dur = dur > 0 ? dur * scale : -1;
     for (int ch = 0; ch < m_nch; ch++)

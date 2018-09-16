@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>478</width>
-    <height>384</height>
+    <width>530</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,6 +40,61 @@
      </layout>
     </item>
     <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <layout class="QFormLayout" name="formLayout">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetMinimumSize</enum>
+        </property>
+        <item row="0" column="0">
+         <widget class="QLabel" name="inputChLabel">
+          <property name="text">
+           <string>Input Ch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QSpinBox" name="inputChSpinBox">
+          <property name="maximumSize">
+           <size>
+            <width>40</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="outputChLabel">
+          <property name="text">
+           <string>Output Ch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QSpinBox" name="outputChSpinBox">
+          <property name="maximumSize">
+           <size>
+            <width>40</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="SignalView" name="graphCorrx" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>100</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
      <widget class="QTextBrowser" name="textBrowser"/>
     </item>
    </layout>
@@ -49,7 +104,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>478</width>
+     <width>530</width>
      <height>21</height>
     </rect>
    </property>
@@ -87,6 +142,7 @@
    <addaction name="actionRun"/>
    <addaction name="actionDebug"/>
    <addaction name="actionAbout"/>
+   <addaction name="actionSettings"/>
    <addaction name="actionExit"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -130,6 +186,10 @@
    </property>
   </action>
   <action name="actionSettings">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/images/settings.png</normaloff>:/images/images/settings.png</iconset>
+   </property>
    <property name="text">
     <string>Settings</string>
    </property>

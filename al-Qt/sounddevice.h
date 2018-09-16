@@ -15,6 +15,7 @@ struct SoundData {
     std::vector<short>      bang;
 
     int                     channels;
+    int                     inputs;
     int                     frames;
     int                     empty;
 

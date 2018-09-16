@@ -64,6 +64,43 @@ void MainLoop::run()
     synchro.setStopped(true);
 }
 
+/*void allocateAll(int num, int inputs, SeriesAA &data)
+{
+    data.resize(num);
+    for (int n = 0; n < num; n++)
+    {
+        data[n].resize(inputs);
+        for (int inp = 0; inp < inputs; inp++)
+        {
+            data[n][inp].resize(sd.frames);
+        }
+    }
+}*/
+
+void xcorrFunc(int inp, TaskDescr td)
+{
+    for (int n = 0; n < td._num; n++)
+    {
+        MainLoop::xcorr(td._sd, n, inp, td.d[n][inp].data());
+    }
+}
+
+int compute2(SoundData &sd)
+{
+    SeriesAA data;
+    std::vector<std::thread> threads(sd.inputs);
+    TaskDescr td(sd.channels, sd.inputs, data, sd);
+
+    for (int inp = 0; inp < sd.inputs; inp++)
+    {
+        std::thread t(xcorrFunc, inp, td);
+        threads[inp] = std::move(t);
+    }
+
+    for (auto& th : threads) th.join();
+    return 0;
+}
+
 int MainLoop::compute()
 {
     memset(delays, 0, sizeof(delays));
@@ -71,12 +108,16 @@ int MainLoop::compute()
     std::vector<float> res(sd.frames);
     for (int n = 0; n < num; n++)
     {
-        for (int inp = 0; inp < inputs; inp++)
+        for (int inp = 0; inp < sd.inputs; inp++)
         {
             // don't compute correlation of reference input with non-reference speakers
             if (inp == ref_in && n != ref_out) continue;
 
-            xcorr(n, inp, res.data());
+            xcorr(sd, n, inp, res.data());
+            if (debug)
+            {
+                emit correlation(res.data(), res.size(), inp, n);
+            }
             int idx = findMaxAbs(res.data(), (int)sd.frames);
             QString ok = " good";
             if (fabs(res[idx]) >= qual)
@@ -101,7 +142,7 @@ int MainLoop::compute()
     if (debug) emit info("reference delay " + QString::number(md));
     for (int n = 0; n < num; n++)
     {
-        for (int inp = 0; inp < inputs; inp++)
+        for (int inp = 0; inp < sd.inputs; inp++)
         {
             delays[n][inp] -= md;
         }
@@ -113,7 +154,7 @@ QString MainLoop::report()
 {
     char lbl[40]; // for OSC messages
     QString rep, rep2;
-    for (int inp = 0; inp < inputs; inp++)
+    for (int inp = 0; inp < sd.inputs; inp++)
     {
         // for all microphones except reference one
         if (inp == ref_in) continue;
@@ -190,7 +231,7 @@ QString MainLoop::report()
     return rep.isNull() ? rep2 : rep;
 }
 
-int MainLoop::findMaxAbs(float *d, int sz)
+int MainLoop::findMaxAbs(const float *d, int sz)
 {
     int idx = 0;
     float v = fabs(*d);
@@ -207,18 +248,18 @@ int MainLoop::findMaxAbs(float *d, int sz)
 }
 
 // crosscorrelation for data from sd.ping and sd.pong, with given channels
-void MainLoop::xcorr(int refChannel, int sigChannel, float * res)
+void MainLoop::xcorr(SoundData &_sd, int refChannel, int sigChannel, float * res)
 {
-    int sz = (int)sd.frames;
+    int sz = (int)_sd.frames;
     alglib::real_1d_array x, y, r;
     x.setlength(sz);
     y.setlength(sz);
     r.setlength(sz);
-    int ch = sd.channels;
+    int ch = _sd.channels;
     for (int i = 0; i < sz; i++)
     {
-        x[i] = sd.ping[i * ch + refChannel] / 32768.0;
-        y[i] = sd.bang[i * inputs + sigChannel] / 32768.0;
+        x[i] = _sd.ping[i * ch + refChannel] / 32768.0;
+        y[i] = _sd.bang[i * _sd.inputs + sigChannel] / 32768.0;
     }
     alglib::corrr1dcircular(y, sz, x, sz, r);
     for (int i = 0; i < sz; i++)

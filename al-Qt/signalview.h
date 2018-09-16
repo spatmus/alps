@@ -18,8 +18,8 @@ class SignalView : public QWidget
 
 public:
     explicit SignalView(QWidget *parent = nullptr);
-    void setData(std::vector<float> &src, quint32 nch, qint32 dur);
-    void setData(std::vector<short> &src, quint32 nch, qint32 dur);
+    void setData(const float *src, int size, quint32 nch, qint32 dur);
+    void setData(const std::vector<short> &src, quint32 nch, qint32 dur);
 
 protected:
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;

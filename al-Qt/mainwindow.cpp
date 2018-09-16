@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&sound, SIGNAL(info(QString)), this, SLOT(soundInfo(QString)));
     connect(&mainloop, SIGNAL(info(QString)), this, SLOT(soundInfo(QString)));
+    connect(&mainloop, SIGNAL(correlation(const float*,int,int,int)), this, SLOT(correlation(const float*,int,int,int)), Qt::DirectConnection);
 }
 
 MainWindow::~MainWindow()
@@ -47,7 +48,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::initSound()
 {
-    if (!sound.selectDevices(adcIn, dacOut, mainloop.inputs, mainloop.outputs, mainloop.sampling))
+    if (!sound.selectDevices(adcIn, dacOut, mainloop.sd.inputs, mainloop.outputs, mainloop.sampling))
     {
         ui->actionRun->setEnabled(false);
     }
@@ -88,7 +89,7 @@ void MainWindow::loadWave()
         // the part of used sound might be shorter than everything loaded from file
         sd.frames = dur * mainloop.sampling;
         sd.szOut = sd.frames * sd.channels;
-        sd.szIn = sd.frames * mainloop.inputs;
+        sd.szIn = sd.frames * mainloop.sd.inputs;
 
         sd.ping.resize(sd.frames * sd.channels);
         sd.pong.resize(sd.szIn);
@@ -209,8 +210,8 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
             else if (ss[0] == "inputs")
             {
-                mainloop.inputs = ss[1].toInt(); //;
-                qDebug() << "inputs " << mainloop.inputs;
+                mainloop.sd.inputs = ss[1].toInt(); //;
+                qDebug() << "inputs " << mainloop.sd.inputs;
             }
             else if (ss[0] == "quality")
             {
@@ -387,6 +388,16 @@ void MainWindow::fadeInOutEx()
     }
 }
 
+void MainWindow::correlation(const float *res, int sz, int inp, int outp)
+{
+    if (inp == ui->inputChSpinBox->value() &&
+            outp == ui->outputChSpinBox->value())
+    {
+        ui->graphCorrx->setData(res, sz, 1, -1);
+        ui->graphCorrx->update();
+    }
+}
+
 void MainWindow::soundInfo(QString info)
 {
     if (info.startsWith("debug "))
@@ -414,7 +425,7 @@ void MainWindow::on_actionDebug_triggered()
     }
     else
     {
-        ui->graph2->setData(sd.bang, 0, -1);
+        ui->graph2->setData(sd.bang, 0, sd.bang.size());
     }
     ui->graph2->update();
 }
