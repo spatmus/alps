@@ -34,7 +34,7 @@ void SignalView::setData(const float *src, int size, quint32 nch, qint32 idx)
     m_dur = idx > 0 ? idx * scale : -1;
     if (m_dur > 0)
     {
-        m_lbl.sprintf("%.1f", m_range);
+        m_lbl.sprintf("[%i] %.1f", idx, m_range);
     }
     else
     {

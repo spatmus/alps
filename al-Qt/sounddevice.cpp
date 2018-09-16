@@ -152,7 +152,8 @@ qint64 SoundPlayer::readData(char *data, qint64 maxlen)
         }
 
         long pOut = ptr * sd.channels;
-        memcpy(data, sd.ping.data() + pOut, sizeof(short) * frames * sd.channels);
+        size_t n = sizeof(short) * frames * sd.channels;
+        memcpy(data, sd.ping.data() + pOut, n);
         synchro.addAudioPtrOut(frames);
         return maxlen;
     }
