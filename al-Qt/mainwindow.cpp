@@ -31,7 +31,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&sound, SIGNAL(info(QString)), this, SLOT(soundInfo(QString)));
     connect(&mainloop, SIGNAL(info(QString)), this, SLOT(soundInfo(QString)));
-    connect(&mainloop, SIGNAL(correlation(const float*,int,int,int)), this, SLOT(correlation(const float*,int,int,int)), Qt::DirectConnection);
+    connect(&mainloop, SIGNAL(correlation(const float*,int,int,int,int)), this,
+            SLOT(correlation(const float*,int,int,int,int)), Qt::DirectConnection);
 }
 
 MainWindow::~MainWindow()
@@ -96,7 +97,7 @@ void MainWindow::loadWave()
         sd.bang.resize(sd.szIn);
         fadeInOutEx();
 
-        ui->graph1->setData(sd.ping, fmt.channelCount(), sd.frames);
+        ui->graph1->setData(sd.ping, fmt.channelCount(), -1);
 
         for (int i = 0; i < sd.channels; i++)
         {
@@ -388,12 +389,12 @@ void MainWindow::fadeInOutEx()
     }
 }
 
-void MainWindow::correlation(const float *res, int sz, int inp, int outp)
+void MainWindow::correlation(const float *res, int sz, int inp, int outp, int idx)
 {
     if (inp == ui->inputChSpinBox->value() &&
             outp == ui->outputChSpinBox->value())
     {
-        ui->graphCorrx->setData(res, sz, 1, -1);
+        ui->graphCorrx->setData(res, sz, 1, idx);
         ui->graphCorrx->update();
     }
 }
@@ -421,11 +422,11 @@ void MainWindow::on_actionDebug_triggered()
     sound.debug = debug;
     if (debug)
     {
-        ui->graph2->setData(sd.bang, fmt.channelCount(), sd.bang.size());
+        ui->graph2->setData(sd.bang, fmt.channelCount(), -1);
     }
     else
     {
-        ui->graph2->setData(sd.bang, 0, sd.bang.size());
+        ui->graph2->setData(sd.bang, 0, -1);
     }
     ui->graph2->update();
 }

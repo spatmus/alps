@@ -41,15 +41,21 @@
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMinimumSize</enum>
+      </property>
       <item>
        <layout class="QFormLayout" name="formLayout">
         <property name="sizeConstraint">
-         <enum>QLayout::SetMinimumSize</enum>
+         <enum>QLayout::SetDefaultConstraint</enum>
+        </property>
+        <property name="fieldGrowthPolicy">
+         <enum>QFormLayout::FieldsStayAtSizeHint</enum>
         </property>
         <item row="0" column="0">
          <widget class="QLabel" name="inputChLabel">
           <property name="text">
-           <string>Input Ch</string>
+           <string>Input Channel</string>
           </property>
          </widget>
         </item>
@@ -66,7 +72,7 @@
         <item row="1" column="0">
          <widget class="QLabel" name="outputChLabel">
           <property name="text">
-           <string>Output Ch</string>
+           <string>Output Channel</string>
           </property>
          </widget>
         </item>

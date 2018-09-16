@@ -37,7 +37,7 @@ private slots:
 
     void soundInfo(QString info);
 
-    void correlation(const float *res, int sz, int inp, int outp);
+    void correlation(const float *res, int sz, int inp, int outp, int idx);
 
     void on_actionRun_toggled(bool active);
 

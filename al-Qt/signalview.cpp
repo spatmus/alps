@@ -9,22 +9,21 @@ SignalView::SignalView(QWidget *parent) : QWidget(parent)
 
 
 
-void SignalView::setData(const std::vector<short> &src, quint32 nch, qint32 dur)
+void SignalView::setData(const std::vector<short> &src, quint32 nch, qint32 idx)
 {
     std::vector<float> ff;
     ff.assign(src.begin(), src.end());
     m_range = 32768.0;
-    setData(ff.data(), ff.size(), nch, dur);
+    setData(ff.data(), ff.size(), nch, idx);
 }
 
-void SignalView::setData(const float *src, int size, quint32 nch, qint32 dur)
+void SignalView::setData(const float *src, int size, quint32 nch, qint32 idx)
 {
     m_nch = nch;
     if (!m_nch) return;
 
-    if (dur < 0)
+    if (idx > 0 && nch == 1)
     {
-        int idx = MainLoop::findMaxAbs(src, size);
         m_range = fabs(src[idx]);
     }
 
@@ -32,7 +31,15 @@ void SignalView::setData(const float *src, int size, quint32 nch, qint32 dur)
     bottom.resize(dim * m_nch);
     quint32 sz = size / m_nch;
     float scale = (float)dim / sz;
-    m_dur = dur > 0 ? dur * scale : -1;
+    m_dur = idx > 0 ? idx * scale : -1;
+    if (m_dur > 0)
+    {
+        m_lbl.sprintf("%.1f", m_range);
+    }
+    else
+    {
+        m_lbl = "";
+    }
     for (int ch = 0; ch < m_nch; ch++)
     {
         int idx = -1;
@@ -85,7 +92,9 @@ void SignalView::paintEvent(QPaintEvent *event)
 
     if (m_dur > 0)
     {
+        painter.drawText(10, 10, m_lbl);
         int mark = scx * m_dur;
+        painter.setPen(Qt::red);
         painter.drawLine(mark, 0, mark, height());
     }
 }

@@ -114,11 +114,11 @@ int MainLoop::compute()
             if (inp == ref_in && n != ref_out) continue;
 
             xcorr(sd, n, inp, res.data());
+            int idx = findMaxAbs(res.data(), (int)sd.frames);
             if (debug)
             {
-                emit correlation(res.data(), res.size(), inp, n);
+                emit correlation(res.data(), res.size(), inp, n, idx);
             }
-            int idx = findMaxAbs(res.data(), (int)sd.frames);
             QString ok = " good";
             if (fabs(res[idx]) >= qual)
             {

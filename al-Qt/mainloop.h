@@ -70,7 +70,7 @@ public:
 
 signals:
     void info(QString inf);
-    void correlation(const float* res, int sz, int inp, int outp);
+    void correlation(const float* res, int sz, int inp, int outp, int idx);
 
 public slots:
 };
