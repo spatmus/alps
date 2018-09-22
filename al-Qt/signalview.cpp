@@ -1,6 +1,7 @@
 #include "signalview.h"
 #include <QPainter>
 #include "mainloop.h"
+#include <math.h>
 
 SignalView::SignalView(QWidget *parent) : QWidget(parent)
 {
