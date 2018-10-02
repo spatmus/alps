@@ -46,19 +46,23 @@
 
 struct chunk
 {
+    chunk(const char *t)
+    {
+        memcpy(id, t, sizeof(id));
+    }
     char        id[4];
     quint32     size;
 };
 
 struct RIFFHeader
 {
-    chunk       descriptor;     // "RIFF"
+    chunk       descriptor = chunk("RIFF");
     char        type[4];        // "WAVE"
 };
 
 struct WAVEHeader
 {
-    chunk       descriptor;
+    chunk       descriptor = chunk("WAVE");
     quint16     audioFormat;
     quint16     numChannels;
     quint32     sampleRate;
@@ -69,7 +73,7 @@ struct WAVEHeader
 
 struct DATAHeader
 {
-    chunk       descriptor;
+    chunk       descriptor = chunk("data");
 };
 
 struct CombinedHeader
@@ -89,7 +93,7 @@ bool WavFile::load(const QString &fileName, std::vector<short> &samples)
 {
     close();
     setFileName(fileName);
-    return open(QIODevice::ReadOnly) && readHeader()&& readSamples(samples);
+    return open(QIODevice::ReadOnly) && readHeader() && readSamples(samples);
 }
 
 const QAudioFormat &WavFile::fileFormat() const
@@ -168,3 +172,48 @@ bool WavFile::readSamples(std::vector<short> &samples)
     }
     return true;
 }
+
+bool WavFile::writeHeader(QAudioFormat &fmt, quint32 sz)
+{
+    seek(0);
+
+    CombinedHeader header;
+    memcpy(&header.riff.descriptor.id, "RIFF", 4);
+    memcpy(&header.riff.type, "WAVE", 4);
+    header.riff.descriptor.size = sz + sizeof(header.wave);
+    memcpy(&header.wave.descriptor.id, "fmt ", 4);
+    header.wave.audioFormat = 0;
+    header.wave.descriptor.size = qToLittleEndian<quint32>(sizeof(WAVEHeader));
+
+    header.wave.bitsPerSample = qToLittleEndian<quint16>(fmt.sampleSize());
+    header.wave.numChannels = qToLittleEndian<quint16>(fmt.channelCount());
+    header.wave.sampleRate = qToLittleEndian<quint32>(fmt.sampleRate());
+    header.wave.blockAlign = qToLittleEndian<quint16>(header.wave.numChannels * header.wave.bitsPerSample / 8);
+    header.wave.byteRate = qToLittleEndian<quint32>(fmt.sampleSize() / 8 * fmt.sampleRate() * fmt.channelCount());
+
+//    m_fileFormat.sampleType(bps == 8 ? QAudioFormat::UnSignedInt : QAudioFormat::SignedInt);
+
+    bool result = write(reinterpret_cast<char *>(&header), sizeof(CombinedHeader)) == sizeof(CombinedHeader);
+    return result;
+}
+
+bool WavFile::writeSamples(std::vector<short> &samples)
+{
+    DATAHeader dataHeader;
+    dataHeader.descriptor.size = samples.size() * 2;
+
+    if (write(reinterpret_cast<char*>(&dataHeader), sizeof(DATAHeader)) != sizeof(DATAHeader))
+        return false;
+
+    write(reinterpret_cast<char*>(samples.data()), dataHeader.descriptor.size);
+    qDebug() << "audio written " << size();
+    return true;
+}
+
+bool WavFile::save(const QString &fileName, QAudioFormat &fmt, std::vector<short> &samples)
+{
+    close();
+    setFileName(fileName);
+    return open(QIODevice::WriteOnly) && writeHeader(fmt, samples.size() * 2) && writeSamples(samples);
+}
+

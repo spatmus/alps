@@ -57,7 +57,6 @@ public:
     static void xcorr(SoundData &_sd, int refChannel, int sigChannel, float * res);
     SoundData   &sd;
 
-    int outputs = 2;
     int ref_out = 0;
     int ref_in  = 0;
     float qual  = QUALITY;

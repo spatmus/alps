@@ -8,6 +8,7 @@
 #include "Speakers.hpp"
 #include <math.h>
 #include <iostream>
+#include <strstream>
 
 bool Speakers::set(int idx, xyz &sp)
 {
@@ -42,7 +43,7 @@ bool Speakers::distToXY(double d1, double d2, int n, int m, double *x, double *y
     double y2 = xy[m].y;
     double dx = x2 - x1;
     double dy = y2 - y1;
-    std::cout << dx << " " << dy << " " << std::endl;
+//    std::cout << dx << " " << dy << " " << std::endl;
     if (!dx && !dy) return false;
     double L = sqrt(dx * dx + dy * dy);
     double a = atan2(dy, dx);
@@ -53,7 +54,7 @@ bool Speakers::distToXY(double d1, double d2, int n, int m, double *x, double *y
         float co = cosf(a);
         *x = x1 + X * co - Y * si;
         *y = y1 + X * si + Y * co;
-        std::cout << X << " " << Y << " a " << a << " si " << si << " co " << co << std::endl;
+//        std::cout << X << " " << Y << " a " << a << " si " << si << " co " << co << std::endl;
         return true;
     }
     
@@ -161,29 +162,38 @@ void Speakers::findSpeakerPairs()
                 speakers.push_back(spair(a, b));
             }
         }
-        
-        np = (int)speakers.size();
     }
     else
     {
         std::cout << "PAIRS" << std::endl;
     }
-    
+}
+
+std::string Speakers::toString()
+{
+    std::ostrstream os;
+
+    int n = lastSpeaker + 1;
+    int np = speakers.size();
     for (int i = 0; i < np; i++)
     {
         speaker &a = speakers[i].one;
         speaker &b = speakers[i].two;
-        std::cout << i << " [" << a.id << "] (" << a.x << "," << a.y << ") ["
+        os << i << " [" << a.id << "] (" << a.x << "," << a.y << ") ["
         << b.id << "] (" << b.x << "," << b.y << ")" << std::endl;
     }
-    
+
     for (int i = 0; i < n; i++)
     {
         speaker a = cc[i];
         if (!a.used)
         {
-            std::cout << "NOT USED [" << i << "] (" << a.x << "," << a.y << ")" << std::endl;
+            os << "NOT USED [" << i << "] (" << a.x << "," << a.y << ")" << std::endl;
         }
     }
 
+    os << std::ends;
+    std::string str = os.str();
+    std::cout << str;
+    return str;
 }

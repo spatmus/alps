@@ -8,16 +8,16 @@
 #include <QAudioBuffer>
 
 struct SoundData {
-    long                    szIn;
-    long                    szOut;
+    long                    szIn = 0;
+    long                    szOut = 0;
     std::vector<short>      ping;
     std::vector<short>      pong;
     std::vector<short>      bang;
 
-    int                     channels;
-    int                     inputs;
-    int                     frames;
-    int                     empty;
+    int                     channels = 8;
+    int                     inputs = 8;
+    int                     frames = 0;
+    int                     empty = 0;
 
     QString toString()
     {

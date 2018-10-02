@@ -9,6 +9,7 @@
 #define Speakers_hpp
 
 #include <vector>
+#include <string>
 
 // 2D projections of speakers are used to select usable pairs
 struct speaker
@@ -89,7 +90,9 @@ public:
 
 	// This is the last index of speakers position loaded from configuration
 	// It should match the number of channels in wav file
-	int lastSpeaker = 1; // the default is stereo
+    int lastSpeaker = -1; // the default is stereo
+
+    std::string toString();
 };
 
 #endif /* Speakers_hpp */

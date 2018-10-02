@@ -49,7 +49,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::initSound()
 {
-    if (!sound.selectDevices(adcIn, dacOut, mainloop.sd.inputs, mainloop.outputs, mainloop.sampling))
+    ui->inputChSpinBox->setMaximum(sd.inputs - 1);
+    ui->outputChSpinBox->setMaximum(sd.channels - 1);
+    if (!sound.selectDevices(adcIn, dacOut, mainloop.sd.inputs, mainloop.sd.channels, mainloop.sampling))
     {
         ui->actionRun->setEnabled(false);
     }
@@ -165,6 +167,15 @@ void MainWindow::on_actionRun_toggled(bool active)
         ui->actionRun->setText("Run");
         ui->actionRun->setIcon(QIcon(":/images/images/player_play.png"));
         ui->statusBar->showMessage("Stopped");
+        if (debug)
+        {
+            WavFile vf(this);
+            QAudioFormat afmt = fmt;
+            vf.save(pulsename, fmt, sd.bang); // output
+
+            fmt.setChannelCount(sd.inputs);
+            vf.save(recname, fmt, sd.ping); // input
+        }
     }
 }
 
@@ -212,7 +223,7 @@ void MainWindow::loadConfiguration(const char *cfg)
             else if (ss[0] == "inputs")
             {
                 mainloop.sd.inputs = ss[1].toInt(); //;
-                qDebug() << "inputs " << mainloop.sd.inputs;
+                qDebug() << "inputs " << mainloop.sd.inputs << " " << sd.inputs;
             }
             else if (ss[0] == "quality")
             {
@@ -323,6 +334,8 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
         }
     }
+    if (!mainloop.autopan) speakers.findSpeakerPairs();
+    ui->textBrowser->append(speakers.toString().c_str());
 }
 
 void MainWindow::zeroChannel(int ch, long from, long to)
