@@ -34,6 +34,7 @@ void MainLoop::run()
             if (compute() == 0)
             {
                 // emit info("zero reference delay; measurement ignored.");
+                emit info("debug no compute");
                 continue;
             }
         }
@@ -228,7 +229,7 @@ QString MainLoop::report()
             sendOsc(lbl, "");
         }
     }
-    return rep.isNull() ? rep2 : rep;
+    return rep.isEmpty() ? rep2 : rep;
 }
 
 int MainLoop::findMaxAbs(const float *d, int sz)

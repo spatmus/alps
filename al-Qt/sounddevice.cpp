@@ -70,6 +70,11 @@ bool SoundDevice::selectDevices(QString adc, QString dac, int inputs, int output
         if (di.isFormatSupported(format))
         {
             emit info(m_adc + ", " + QString::number(format.bytesPerFrame()) + " bytes per frame");
+            QStringList codecs = di.supportedCodecs();
+            for (auto codec : codecs)
+            {
+                emit info(codec);
+            }
             m_inp = new QAudioInput(di, format, this);
         }
         else

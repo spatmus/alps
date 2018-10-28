@@ -63,6 +63,7 @@ private:
     QString adcIn = "Built-in Input";
     QString dacOut = "Built-in Output";
 
+    QString m_cfg;
     QString fname = "noise.wav";
     QString recname = "record.wav";
     QString pulsename = "pulses.wav";

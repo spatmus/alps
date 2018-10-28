@@ -186,13 +186,34 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::on_actionSettings_triggered()
 {
-    SettingsDialog dlg;
-    dlg.exec();
+    if (ui->actionRun->isChecked())
+    {
+        ui->actionRun->setChecked(false);
+    }
+
+    QFile f(m_cfg);
+    if (f.open(QIODevice::ReadWrite))
+    {
+        QByteArray all = f.readAll();
+        SettingsDialog dlg;
+        dlg.setText(all);
+        if (dlg.exec() == QDialog::Accepted)
+        {
+            f.reset();
+            f.resize(0);
+            f.write(dlg.getText().toLatin1());
+            f.close();
+            loadConfiguration(m_cfg.toLatin1().data());
+            loadWave();
+            initSound();
+            ui->graph1->update();
+        }
+    }
 }
 
 void MainWindow::loadConfiguration(const char *cfg)
 {
-    QFile f(cfg);
+    QFile f(m_cfg = cfg);
     if (f.open(QIODevice::ReadOnly))
     {
         QString buf;
@@ -334,7 +355,8 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
         }
     }
-    if (!mainloop.autopan) speakers.findSpeakerPairs();
+//    if (!mainloop.autopan)
+    speakers.findSpeakerPairs();
     ui->textBrowser->append(speakers.toString().c_str());
 }
 
@@ -421,6 +443,7 @@ void MainWindow::soundInfo(QString info)
             on_actionDebug_triggered();
         }
         ui->statusBar->showMessage(info.mid(6));
+        ui->textBrowser->append(info.mid(6));
     }
     else
     {
@@ -435,7 +458,7 @@ void MainWindow::on_actionDebug_triggered()
     sound.debug = debug;
     if (debug)
     {
-        ui->graph2->setData(sd.bang, fmt.channelCount(), -1);
+        ui->graph2->setData(sd.bang, sd.inputs, -1);
     }
     else
     {

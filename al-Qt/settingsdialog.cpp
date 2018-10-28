@@ -12,3 +12,13 @@ SettingsDialog::~SettingsDialog()
 {
     delete ui;
 }
+
+void SettingsDialog::setText(QString t)
+{
+    ui->plainTextEdit->setPlainText(t);
+}
+
+QString SettingsDialog::getText()
+{
+    return ui->plainTextEdit->toPlainText();
+}

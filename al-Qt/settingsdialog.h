@@ -15,6 +15,9 @@ public:
     explicit SettingsDialog(QWidget *parent = nullptr);
     ~SettingsDialog();
 
+    void setText(QString t);
+    QString getText();
+
 private:
     Ui::SettingsDialog *ui;
 };

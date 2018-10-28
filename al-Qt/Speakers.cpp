@@ -171,6 +171,10 @@ void Speakers::findSpeakerPairs()
 
 std::string Speakers::toString()
 {
+    if (!cc.size())
+    {
+        return "Speakers not configured in autopan mode";
+    }
     std::ostrstream os;
 
     int n = lastSpeaker + 1;
