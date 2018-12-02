@@ -7,8 +7,10 @@
 using namespace std::chrono;
 
 MainLoop::MainLoop(Synchro  &syn, SoundData &data, Speakers &spe) :
-    QThread(), synchro(syn), sd(data), speakers(spe)
+    QThread(), synchro(syn), speakers(spe),
+    td(saa, data), sd(data)
 {
+    allocateAll();
 }
 
 void MainLoop::setDebug(bool value)
@@ -23,28 +25,26 @@ high_resolution_clock::time_point MainLoop::now()
 
 void MainLoop::run()
 {
+    td.init();
     synchro.setStopped(false);
     for (int i = 0; !currentThread()->isInterruptionRequested(); i++)
     {
         auto t0 = now();
         synchro.transferData(sd.frames);
         auto t1 = now();
-        if (i)
-        {
-            if (compute() == 0)
-            {
-                // emit info("zero reference delay; measurement ignored.");
-                emit info("debug no compute");
-                continue;
-            }
-        }
+        if (!i) continue;
+        threads ? compute2() : compute();
         auto t2 = now();
-        QString rep = "No result";
-        if (i)
+        if (applyRefDelay() == 0)
         {
-            QString r = report();
-            if (!r.isEmpty()) rep = r;
+            // emit info("zero reference delay; measurement ignored.");
+            emit info("debug no compute");
+            continue;
         }
+
+        QString rep = "No result";
+        QString r = report();
+        if (!r.isEmpty()) rep = r;
         auto t3 = now();
         if (debug)
         {
@@ -65,18 +65,18 @@ void MainLoop::run()
     synchro.setStopped(true);
 }
 
-/*void allocateAll(int num, int inputs, SeriesAA &data)
+void MainLoop::allocateAll()
 {
-    data.resize(num);
-    for (int n = 0; n < num; n++)
+    saa.resize(sd.channels);
+    for (int n = 0; n < sd.channels; n++)
     {
-        data[n].resize(inputs);
-        for (int inp = 0; inp < inputs; inp++)
+        saa[n].resize(sd.inputs);
+        for (int inp = 0; inp < sd.inputs; inp++)
         {
-            data[n][inp].resize(sd.frames);
+            saa[n][inp].resize(sd.frames);
         }
     }
-}*/
+}
 
 void xcorrFunc(int inp, TaskDescr td)
 {
@@ -86,11 +86,11 @@ void xcorrFunc(int inp, TaskDescr td)
     }
 }
 
-int compute2(SoundData &sd)
+void MainLoop::compute2()
 {
-    SeriesAA data;
     std::vector<std::thread> threads(sd.inputs);
-    TaskDescr td(sd.channels, sd.inputs, data, sd);
+    TaskDescr td(saa, sd);
+    td.init();
 
     for (int inp = 0; inp < sd.inputs; inp++)
     {
@@ -99,10 +99,36 @@ int compute2(SoundData &sd)
     }
 
     for (auto& th : threads) th.join();
-    return 0;
+
+    for (int n = 0; n < sd.channels; n++)
+    {
+        for (int inp = 0; inp < sd.inputs; inp++)
+        {
+            float *res = saa[n][inp].data();
+            int idx = findMaxAbs(res, sd.frames);
+            if (debug)
+            {
+                emit correlation(res, sd.frames, inp, n, idx);
+            }
+            QString ok = " good";
+            if (fabs(res[idx]) >= qual)
+            {
+                delays[n][inp] = idx;
+            }
+            else
+            {
+                ok = " ignored";
+            }
+            if (debug) emit info("speaker " + QString::number(n)
+                                 + " mic " + QString::number(inp)
+                                 + " idx " + QString::number(idx)
+                                 + " val " + QString::number(res[idx])
+                                 + ok);
+        }
+    }
 }
 
-int MainLoop::compute()
+void MainLoop::compute()
 {
     memset(delays, 0, sizeof(delays));
     int num = sd.channels; // output channels
@@ -115,7 +141,7 @@ int MainLoop::compute()
             if (inp == ref_in && n != ref_out) continue;
 
             xcorr(sd, n, inp, res.data());
-            int idx = findMaxAbs(res.data(), (int)sd.frames);
+            int idx = findMaxAbs(res.data(), sd.frames);
             if (debug)
             {
                 emit correlation(res.data(), res.size(), inp, n, idx);
@@ -136,12 +162,15 @@ int MainLoop::compute()
                                  + ok);
         }
     }
+}
 
+int MainLoop::applyRefDelay()// returns reference delay in samples
+{
     // One input channel is used for latency correction.
     // It is electrically connected to one output.
     int md = delays[ref_out][ref_in];
     if (debug) emit info("reference delay " + QString::number(md));
-    for (int n = 0; n < num; n++)
+    for (int n = 0; n < sd.channels; n++)
     {
         for (int inp = 0; inp < sd.inputs; inp++)
         {
@@ -336,4 +365,11 @@ void MainLoop::sendOsc(const char *address, const char *fmt, ...)
 
     QUdpSocket udp;
     udp.writeDatagram(datagram, QHostAddress(oscIP), oscPort.toInt());
+}
+
+void TaskDescr::init()
+{
+    _num = _sd.inputs;
+    _inputs = _sd.inputs;
+
 }

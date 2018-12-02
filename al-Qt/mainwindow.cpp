@@ -149,6 +149,7 @@ void MainWindow::on_actionRun_toggled(bool active)
             ui->actionRun->setText("Stop");
             ui->actionRun->setIcon(QIcon(":/images/images/player_stop.png"));
             ui->statusBar->showMessage("Running");
+            mainloop.allocateAll();
             mainloop.start();
         }
         else
@@ -288,6 +289,11 @@ void MainWindow::loadConfiguration(const char *cfg)
             {
                 run = ss[1].toInt() != 0;
                 qDebug() << "run " << run;
+            }
+            else if (ss[0] == "threads")
+            {
+                mainloop.threads = ss[1].toInt();
+                qDebug() << "threads " << mainloop.threads;
             }
             else if (ss[0] == "autopan")
             {

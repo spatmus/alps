@@ -16,11 +16,12 @@ typedef std::vector<Series> SeriesA;
 typedef std::vector<SeriesA> SeriesAA;
 struct TaskDescr
 {
-    TaskDescr(int num, int inputs, SeriesAA &data, SoundData &sd) :
-        _num(num), _inputs(inputs),
+    TaskDescr(SeriesAA &data, SoundData &sd) :
         d(data), _sd(sd)
     {
     }
+
+    void init();
 
     int _num;
     int _inputs;
@@ -41,7 +42,11 @@ class MainLoop : public QThread
 
     static std::chrono::steady_clock::time_point now();
 
-    int compute(); // returns reference delay in samples
+    SeriesAA saa;
+    TaskDescr td;
+    void compute2();
+    void compute();
+    int applyRefDelay(); // returns reference delay in samples
 
     QString report();
     void sendOsc(const char *address, const char *fmt, ...);
@@ -51,6 +56,8 @@ class MainLoop : public QThread
 
 public:
     explicit MainLoop(Synchro &syn, SoundData &data, Speakers &spe);
+
+    void allocateAll();
     void run() override;
 
     static int findMaxAbs(const float *d, int sz);
@@ -64,6 +71,7 @@ public:
     QString oscPort;
     qint32 sampling = SAMPLE_RATE_;
     bool autopan = false;
+    bool threads = true;
 
     void setDebug(bool value);
 
