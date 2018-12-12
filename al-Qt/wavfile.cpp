@@ -44,6 +44,9 @@
 #include <QFile>
 #include "wavfile.h"
 
+#pragma pack(push)
+#pragma pack(1)
+
 struct chunk
 {
     chunk(const char *t)
@@ -62,13 +65,15 @@ struct RIFFHeader
 
 struct WAVEHeader
 {
-    chunk       descriptor = chunk("WAVE");
+    chunk       descriptor = chunk("fmt ");
     quint16     audioFormat;
     quint16     numChannels;
     quint32     sampleRate;
     quint32     byteRate;
     quint16     blockAlign;
     quint16     bitsPerSample;
+
+    static int Len() { return sizeof(WAVEHeader) - sizeof(descriptor); }
 };
 
 struct DATAHeader
@@ -81,6 +86,7 @@ struct CombinedHeader
     RIFFHeader  riff;
     WAVEHeader  wave;
 };
+#pragma pack(pop)
 
 WavFile::WavFile(QObject *parent)
     : QFile(parent)
@@ -178,12 +184,10 @@ bool WavFile::writeHeader(QAudioFormat &fmt, quint32 sz)
     seek(0);
 
     CombinedHeader header;
-    memcpy(&header.riff.descriptor.id, "RIFF", 4);
     memcpy(&header.riff.type, "WAVE", 4);
     header.riff.descriptor.size = sz + sizeof(header.wave);
-    memcpy(&header.wave.descriptor.id, "fmt ", 4);
-    header.wave.audioFormat = 0;
-    header.wave.descriptor.size = qToLittleEndian<quint32>(sizeof(WAVEHeader));
+    header.wave.audioFormat = 1;
+    header.wave.descriptor.size = qToLittleEndian<quint32>(WAVEHeader::Len());
 
     header.wave.bitsPerSample = qToLittleEndian<quint16>(fmt.sampleSize());
     header.wave.numChannels = qToLittleEndian<quint16>(fmt.channelCount());
