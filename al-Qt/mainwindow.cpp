@@ -222,124 +222,126 @@ void MainWindow::loadConfiguration(const char *cfg)
         {
             QStringList ss = buf.split("=", QString::SkipEmptyParts);
             if (ss.size() != 2) continue;
-            if (ss[0] == "duration")
+            QString ss0 = ss[0].trimmed();
+            QString ss1 = ss[1].trimmed();
+            if (ss0 == "duration")
             {
-                duration = ss[1].toDouble();
+                duration = ss1.toDouble();
                 qDebug() << "duration " << duration;
             }
-            else if (ss[0] == "file")
+            else if (ss0 == "file")
             {
-                fname = ss[1].trimmed(); //strdup(ofFilePath::getAbsolutePath(strtok(0, "\r\n")).c_str());
+                fname = ss1; //strdup(ofFilePath::getAbsolutePath(strtok(0, "\r\n")).c_str());
                 qDebug() << "file name " << fname;
             }
-            else if (ss[0] == "recname")
+            else if (ss0 == "recname")
             {
-                recname = ss[1].trimmed(); //strdup(ofFilePath::getAbsolutePath(strtok(0, "\r\n")).c_str());
+                recname = ss1; //strdup(ofFilePath::getAbsolutePath(strtok(0, "\r\n")).c_str());
                 qDebug() << "record file name " << recname;
             }
-            else if (ss[0] == "pulsename")
+            else if (ss0 == "pulsename")
             {
-                pulsename = ss[1].trimmed(); //strdup(ofFilePath::getAbsolutePath(strtok(0, "\r\n")).c_str());
+                pulsename = ss1; //strdup(ofFilePath::getAbsolutePath(strtok(0, "\r\n")).c_str());
                 qDebug() << "file name " << pulsename;
             }
-            else if (ss[0] == "inputs")
+            else if (ss0 == "inputs")
             {
-                mainloop.sd.inputs = ss[1].toInt(); //;
+                mainloop.sd.inputs = ss1.toInt(); //;
                 qDebug() << "inputs " << mainloop.sd.inputs << " " << sd.inputs;
             }
-            else if (ss[0] == "quality")
+            else if (ss0 == "quality")
             {
-                mainloop.qual = ss[1].toFloat();
+                mainloop.qual = ss1.toFloat();
                 qDebug() << "quality " << mainloop.qual;
             }
-            else if (ss[0] == "oscIP")
+            else if (ss0 == "oscIP")
             {
-                mainloop.oscIP = ss[1].trimmed();
+                mainloop.oscIP = ss1.trimmed();
             }
-            else if (ss[0] == "oscPort")
+            else if (ss0 == "oscPort")
             {
-                mainloop.oscPort = ss[1];
+                mainloop.oscPort = ss1;
             }
-            else if (ss[0] == "adcIn")
+            else if (ss0 == "adcIn")
             {
-                adcIn = ss[1].trimmed();
+                adcIn = ss1;
                 qDebug() << "adcIn " << adcIn;
             }
-            else if (ss[0] == "refIn")
+            else if (ss0 == "refIn")
             {
-                mainloop.ref_in = ss[1].toInt();
+                mainloop.ref_in = ss1.toInt();
                 qDebug() << "refIn " << mainloop.ref_in;
             }
-            else if (ss[0] == "refOut")
+            else if (ss0 == "refOut")
             {
-                mainloop.ref_out = ss[1].toInt();
+                mainloop.ref_out = ss1.toInt();
                 qDebug() << "refOut " << mainloop.ref_out;
             }
-            else if (ss[0] == "dacOut")
+            else if (ss0 == "dacOut")
             {
-                dacOut = ss[1].trimmed();
+                dacOut = ss1;
                 qDebug() << "dacOut " << dacOut;
             }
-            else if (ss[0] == "debug")
+            else if (ss0 == "debug")
             {
-                debug = ss[1].toInt();
+                debug = ss1.toInt();
                 qDebug() << "debug " << debug;
             }
-            else if (ss[0] == "run")
+            else if (ss0 == "run")
             {
-                run = ss[1].toInt() != 0;
+                run = ss1.toInt() != 0;
                 qDebug() << "run " << run;
             }
-            else if (ss[0] == "threads")
+            else if (ss0 == "threads")
             {
-                mainloop.threads = ss[1].toInt();
+                mainloop.threads = ss1.toInt();
                 qDebug() << "threads " << mainloop.threads;
             }
-            else if (ss[0] == "autopan")
+            else if (ss0 == "autopan")
             {
-                mainloop.autopan = ss[1].toInt() != 0;
+                mainloop.autopan = ss1.toInt() != 0;
                 qDebug() << "autopan " << mainloop.autopan;
             }
-            else if (ss[0] ==  "fadems")
+            else if (ss0 ==  "fadems")
             {
-                fadems = ss[1].toDouble();
+                fadems = ss1.toDouble();
                 qDebug() << "fadems " << fadems;
             }
-            else if (ss[0] == "pausems")
+            else if (ss0 == "pausems")
             {
-                pausems = ss[1].toDouble();
+                pausems = ss1.toDouble();
                 qDebug() << "pausems " << pausems;
             }
-            else if (ss[0] == "pulsems")
+            else if (ss0 == "pulsems")
             {
-                pulsems = ss[1].toDouble();
+                pulsems = ss1.toDouble();
                 qDebug() << "pulsems " << pulsems;
             }
-            else if (ss[0] ==  "pulsenumber")
+            else if (ss0 ==  "pulsenumber")
             {
-                pulsenumber = ss[1].toInt();
+                pulsenumber = ss1.toInt();
                 qDebug() << "pulsenumber " << pulsenumber;
             }
-            else if (ss[0] ==  "maxdist")
+            else if (ss0 ==  "maxdist")
             {
-                maxdist = ss[1].toDouble();
+                maxdist = ss1.toDouble();
                 qDebug() << "maxdist " << maxdist;
             }
-            else if (ss[0] ==  "offsets")
+            else if (ss0 ==  "offsets")
             {
-                QStringList oo = ss[1].split(",");
+                QStringList oo = ss1.split(",");
                 for (int i = 0; (i < MAX_OUTPUTS) && i < oo.size(); ++i)
                 {
                     offsets[i] = oo[i].toDouble();
                     qDebug() << "offset " << i << " " << offsets[i];
                 }
             }
-            else if (ss[0].mid(0, 7) == "speaker")
+            else if (ss0.mid(0, 7) == "speaker")
             {
-                int spNum = ss[0].mid(7).toInt();
+                int spNum = ss0.mid(7).toInt();
                 if (spNum >= 0 && spNum < MAX_OUTPUTS)
                 {
-                    QStringList oo = ss[1].split(",", QString::SkipEmptyParts);
+                    QStringList oo = ss1.split(",", QString::SkipEmptyParts);
                     if (oo.size() == 3)
                     {
                         int idx = spNum;
