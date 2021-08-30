@@ -434,6 +434,9 @@ void MainWindow::fadeInOutEx()
 
 void MainWindow::correlation(const float *res, int sz, int inp, int outp, int idx)
 {
+    // Don't waste time
+    if (ui->disableCheckBox->isChecked()) return;
+
     if (inp == ui->inputChSpinBox->value() &&
             outp == ui->outputChSpinBox->value())
     {
@@ -444,6 +447,9 @@ void MainWindow::correlation(const float *res, int sz, int inp, int outp, int id
 
 void MainWindow::soundInfo(QString info)
 {
+    // Don't waste time
+    if (ui->disableCheckBox->isChecked()) return;
+
     if (info.startsWith("debug "))
     {
         if (debug)
@@ -473,4 +479,10 @@ void MainWindow::on_actionDebug_triggered()
         ui->graph2->setData(sd.bang, 0, -1);
     }
     ui->graph2->update();
+}
+
+void MainWindow::on_disableCheckBox_toggled(bool checked)
+{
+    ui->textBrowser->setEnabled(!checked);
+    ui->statusBar->showMessage(checked ? "GUI Muted" : "GUI Unmuted", 3000);
 }

@@ -49,6 +49,8 @@ private slots:
 
     void on_actionDebug_triggered();
 
+    void on_disableCheckBox_toggled(bool checked);
+
 private:
     Ui::MainWindow *ui;
 
