@@ -702,6 +702,9 @@ int compute()
     {
         for (int inp = 0; inp < inputs; inp++)
         {
+            // keep the reference delay
+            if (n == ref_out && inp == ref_in) continue;
+
             delays[n][inp] -= md;
         }
     }
@@ -781,15 +784,15 @@ void report(lo_address t)
 
     for (int inp = 0; inp < inputs; inp++)
     {
-        // for all microphones except reference one
-        if (inp == ref_in) continue;
         cout << "input:" << inp << endl;
 
         // report all distances
         for (int n = 0; n < sd.sfInfo.channels; n++)
         {
             float d = (float)delays[n][inp] / SAMPLE_RATE * 330;
-            if (!distOk(d, n, autopan ? 0 : xy[n][2])) continue;
+
+            // validate the measured distance for all microphones except reference one
+            if ((inp != ref_in) && !distOk(d, n, autopan ? 0 : xy[n][2])) continue;
             
             sprintf(lbl, "/mic%d", inp + 1);
             if (lo_send(t, lbl, "if", n + 1, d) == -1)
