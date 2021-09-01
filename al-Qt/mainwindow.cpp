@@ -363,6 +363,10 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
         }
     }
+    else
+    {
+        ui->textBrowser->append("Not found " + m_cfg);
+    }
 //    if (!mainloop.autopan)
     speakers.findSpeakerPairs();
     ui->textBrowser->append(speakers.toString().c_str());

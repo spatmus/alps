@@ -246,7 +246,7 @@ QString MainLoop::report()
             X /= averNum;
             Y /= averNum;
             QString r;
-            r.sprintf("mic %i x=%4.2lf  y=%4.2lf ", X, Y);
+            r.sprintf("mic %i x=%4.2lf  y=%4.2lf ", inp, X, Y);
             rep += r;
             sprintf(lbl, "/position%d", inp + 1);
             sendOsc(lbl, "ff", X, Y);
