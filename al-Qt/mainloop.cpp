@@ -174,6 +174,8 @@ int MainLoop::applyRefDelay()// returns reference delay in samples
     {
         for (int inp = 0; inp < sd.inputs; inp++)
         {
+            // keep the reference delay uncompensated
+            if (n == ref_out && inp == ref_in) continue;
             delays[n][inp] -= md;
         }
     }
@@ -186,15 +188,15 @@ QString MainLoop::report()
     QString rep, rep2;
     for (int inp = 0; inp < sd.inputs; inp++)
     {
-        // for all microphones except reference one
-        if (inp == ref_in) continue;
 //        cout << "input:" << inp << endl;
 
         // report all distances
         for (int n = 0; n < sd.channels; n++)
         {
             double d = (double)delays[n][inp] / sampling * 330;
-            if (!speakers.distOk(d, n, autopan ? 0 : speakers.getCoordinates(n).z)) continue;
+
+            // validate the measured distance for all microphones except reference one
+            if ((inp != ref_in) && !speakers.distOk(d, n, autopan ? 0 : speakers.getCoordinates(n).z)) continue;
 
             sprintf(lbl, "/mic%d", inp + 1);
             sendOsc(lbl, "if", n + 1, d);
