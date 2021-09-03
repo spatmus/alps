@@ -174,8 +174,8 @@ void MainWindow::on_actionRun_toggled(bool active)
             QAudioFormat afmt = fmt;
             vf.save(pulsename, fmt, sd.bang); // output
 
-            fmt.setChannelCount(sd.inputs);
-            vf.save(recname, fmt, sd.ping); // input
+            afmt.setChannelCount(sd.inputs);
+            vf.save(recname, afmt, sd.ping); // input
         }
     }
 }
