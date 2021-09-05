@@ -294,8 +294,8 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
             else if (ss0 == "threads")
             {
-                mainloop.threads = ss1.toInt();
-                qDebug() << "threads " << mainloop.threads;
+                mainloop.useThreads = ss1.toInt();
+                qDebug() << "threads " << mainloop.useThreads;
             }
             else if (ss0 == "autopan")
             {

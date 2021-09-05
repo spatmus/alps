@@ -33,7 +33,7 @@ void MainLoop::run()
         synchro.transferData(sd.frames);
         auto t1 = now();
         if (!i) continue;
-        threads ? compute2() : compute();
+        useThreads ? compute2() : compute();
         auto t2 = now();
         if (applyRefDelay() == 0)
         {
@@ -80,7 +80,7 @@ void MainLoop::allocateAll()
 
 void xcorrFunc(int inp, TaskDescr td)
 {
-    for (int n = 0; n < td._num; n++)
+    for (int n = 0; n < td._outputs; n++)
     {
         MainLoop::xcorr(td._sd, n, inp, td.d[n][inp].data());
     }
@@ -88,9 +88,10 @@ void xcorrFunc(int inp, TaskDescr td)
 
 void MainLoop::compute2()
 {
-    std::vector<std::thread> threads(sd.inputs);
     TaskDescr td(saa, sd);
     td.init();
+
+    std::vector<std::thread> threads(sd.inputs);
 
     for (int inp = 0; inp < sd.inputs; inp++)
     {
@@ -371,7 +372,7 @@ void MainLoop::sendOsc(const char *address, const char *fmt, ...)
 
 void TaskDescr::init()
 {
-    _num = _sd.inputs;
+    _outputs = _sd.outputs;
     _inputs = _sd.inputs;
 
 }

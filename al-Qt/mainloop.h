@@ -23,7 +23,7 @@ struct TaskDescr
 
     void init();
 
-    int _num;
+    int _outputs;
     int _inputs;
     SeriesAA &d;
     SoundData &_sd;
@@ -71,7 +71,7 @@ public:
     QString oscPort;
     qint32 sampling = SAMPLE_RATE_;
     bool autopan = false;
-    bool threads = true;
+    bool useThreads = true;
 
     void setDebug(bool value);
 
