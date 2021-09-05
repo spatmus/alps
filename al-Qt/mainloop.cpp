@@ -67,8 +67,8 @@ void MainLoop::run()
 
 void MainLoop::allocateAll()
 {
-    saa.resize(sd.channels);
-    for (int n = 0; n < sd.channels; n++)
+    saa.resize(sd.outputs);
+    for (int n = 0; n < sd.outputs; n++)
     {
         saa[n].resize(sd.inputs);
         for (int inp = 0; inp < sd.inputs; inp++)
@@ -100,7 +100,7 @@ void MainLoop::compute2()
 
     for (auto& th : threads) th.join();
 
-    for (int n = 0; n < sd.channels; n++)
+    for (int n = 0; n < sd.outputs; n++)
     {
         for (int inp = 0; inp < sd.inputs; inp++)
         {
@@ -131,7 +131,7 @@ void MainLoop::compute2()
 void MainLoop::compute()
 {
     memset(delays, 0, sizeof(delays));
-    int num = sd.channels; // output channels
+    int num = sd.outputs; // output channels
     std::vector<float> res(sd.frames);
     for (int n = 0; n < num; n++)
     {
@@ -170,7 +170,7 @@ int MainLoop::applyRefDelay()// returns reference delay in samples
     // It is electrically connected to one output.
     int md = delays[ref_out][ref_in];
     if (debug) emit info("reference delay " + QString::number(md));
-    for (int n = 0; n < sd.channels; n++)
+    for (int n = 0; n < sd.outputs; n++)
     {
         for (int inp = 0; inp < sd.inputs; inp++)
         {
@@ -191,7 +191,7 @@ QString MainLoop::report()
 //        cout << "input:" << inp << endl;
 
         // report all distances
-        for (int n = 0; n < sd.channels; n++)
+        for (int n = 0; n < sd.outputs; n++)
         {
             double d = (double)delays[n][inp] / sampling * 330;
 
@@ -214,7 +214,7 @@ QString MainLoop::report()
         {
             int n = speakers.getPair(i).one.id;
             int m = speakers.getPair(i).two.id;
-            if (n >= sd.channels || m >= sd.channels)
+            if (n >= sd.outputs || m >= sd.outputs)
             {
                 // cout << "ERROR: The speaker pair (" << n << "," << m << ") cannot be used" << endl;
                 continue;
@@ -287,7 +287,7 @@ void MainLoop::xcorr(SoundData &_sd, int refChannel, int sigChannel, float * res
     x.setlength(sz);
     y.setlength(sz);
     r.setlength(sz);
-    int ch = _sd.channels;
+    int ch = _sd.outputs;
     for (int i = 0; i < sz; i++)
     {
         x[i] = _sd.ping[i * ch + refChannel] / 32768.0;

@@ -50,8 +50,8 @@ MainWindow::~MainWindow()
 void MainWindow::initSound()
 {
     ui->inputChSpinBox->setMaximum(sd.inputs - 1);
-    ui->outputChSpinBox->setMaximum(sd.channels - 1);
-    if (!sound.selectDevices(adcIn, dacOut, mainloop.sd.inputs, mainloop.sd.channels, mainloop.sampling))
+    ui->outputChSpinBox->setMaximum(sd.outputs - 1);
+    if (!sound.selectDevices(adcIn, dacOut, mainloop.sd.inputs, mainloop.sd.outputs, mainloop.sampling))
     {
         ui->actionRun->setEnabled(false);
     }
@@ -64,8 +64,8 @@ void MainWindow::loadWave()
     if (wf.load(fname, sd.ping))
     {
         fmt = wf.fileFormat();
-        sd.channels = fmt.channelCount();
-        sd.frames = sd.ping.size() / sd.channels;
+        sd.outputs = fmt.channelCount();
+        sd.frames = sd.ping.size() / sd.outputs;
 
         ui->statusBar->showMessage(QString::number(sd.ping.size()) + " samples");
 
@@ -91,17 +91,17 @@ void MainWindow::loadWave()
         }
         // the part of used sound might be shorter than everything loaded from file
         sd.frames = dur * mainloop.sampling;
-        sd.szOut = sd.frames * sd.channels;
+        sd.szOut = sd.frames * sd.outputs;
         sd.szIn = sd.frames * mainloop.sd.inputs;
 
-        sd.ping.resize(sd.frames * sd.channels);
+        sd.ping.resize(sd.frames * sd.outputs);
         sd.pong.resize(sd.szIn);
         sd.bang.resize(sd.szIn);
         fadeInOutEx();
 
         ui->graph1->setData(sd.ping, fmt.channelCount(), -1);
 
-        for (int i = 0; i < sd.channels; i++)
+        for (int i = 0; i < sd.outputs; i++)
         {
             xyz &co = speakers.getCoordinates(i);
             ui->textBrowser->append("[" + QString::number(co.x) + ", " +
@@ -171,11 +171,11 @@ void MainWindow::on_actionRun_toggled(bool active)
         if (debug)
         {
             WavFile vf(this);
-            QAudioFormat afmt = fmt;
-            vf.save(pulsename, fmt, sd.bang); // output
+            vf.save(pulsename, fmt, sd.ping); // output
 
+            QAudioFormat afmt = fmt;
             afmt.setChannelCount(sd.inputs);
-            vf.save(recname, afmt, sd.ping); // input
+            vf.save(recname, afmt, sd.bang); // input
         }
     }
 }
@@ -374,7 +374,7 @@ void MainWindow::loadConfiguration(const char *cfg)
 
 void MainWindow::zeroChannel(int ch, long from, long to)
 {
-    int nch = sd.channels;
+    int nch = sd.outputs;
     for (long i = from, idx = ch + nch * from; i < to; i++, idx += nch)
     {
         sd.ping[idx] = 0;
@@ -383,7 +383,7 @@ void MainWindow::zeroChannel(int ch, long from, long to)
 
 void MainWindow::pulseChannel(int ch, long fade, long from, long to)
 {
-    int nch = sd.channels;
+    int nch = sd.outputs;
     for (long i = 0, idx1 = ch + nch * from, idx2 = nch * to + ch; i < fade;
          i++, idx1 += nch, idx2 -= nch)
     {
@@ -402,7 +402,7 @@ void MainWindow::fadeInOutEx()
         return;
     }
 
-    int nch = sd.channels;
+    int nch = sd.outputs;
     long pls = pulsems / 1000.0 * mainloop.sampling;
     long pau = pausems / 1000.0 * mainloop.sampling;
     long period = pls + pau;

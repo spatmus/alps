@@ -150,14 +150,14 @@ qint64 SoundPlayer::readData(char *data, qint64 maxlen)
     if (ptr < sd.frames)
     {
         long long frames = sd.frames - ptr;
-        int nf = maxlen / sizeof(short) / sd.channels;
+        int nf = maxlen / sizeof(short) / sd.outputs;
         if (frames > nf)
         {
             frames = nf;
         }
 
-        long pOut = ptr * sd.channels;
-        size_t n = sizeof(short) * frames * sd.channels;
+        long pOut = ptr * sd.outputs;
+        size_t n = sizeof(short) * frames * sd.outputs;
         memcpy(data, sd.ping.data() + pOut, n);
         synchro.addAudioPtrOut(frames);
         return maxlen;

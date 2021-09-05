@@ -14,7 +14,7 @@ struct SoundData {
     std::vector<short>      pong;
     std::vector<short>      bang;
 
-    int                     channels = 8;
+    int                     outputs = 8;
     int                     inputs = 8;
     int                     frames = 0;
     int                     empty = 0;
@@ -26,7 +26,7 @@ struct SoundData {
                 + QString::number(szOut) + " size OUT; "
                 + QString::number(ping.size()) + " ping; "
                 + QString::number(pong.size()) + " pong; "
-                + QString::number(channels) + " channels";
+                + QString::number(outputs) + " channels";
     }
 };
 
