@@ -367,9 +367,12 @@ void MainWindow::loadConfiguration(const char *cfg)
     {
         ui->textBrowser->append("Not found " + m_cfg);
     }
-//    if (!mainloop.autopan)
-    speakers.findSpeakerPairs();
-    ui->textBrowser->append(speakers.toString().c_str());
+
+    if (!mainloop.autopan)
+    {
+        speakers.findSpeakerPairs();
+        ui->textBrowser->append(speakers.toString().c_str());
+    }
 }
 
 void MainWindow::zeroChannel(int ch, long from, long to)
