@@ -80,31 +80,45 @@ void MainLoop::allocateAll()
 
 void xcorrFunc(int inp, TaskDescr td)
 {
-    for (int n = 0; n < td._outputs; n++)
+    // compute correlation of a reference input only with a reference speaker
+    if (inp == td._refInp)
     {
-        MainLoop::xcorr(td._sd, n, inp, td.d[n][inp].data());
+        MainLoop::xcorr(td._sd, td._refOut, inp, td.d[td._refOut][inp].data());
+    }
+    else
+    {   // compute correlations of input 'inp' with all speakers
+        for (int n = 0; n < td._outputs; n++)
+        {
+            MainLoop::xcorr(td._sd, n, inp, td.d[n][inp].data());
+        }
     }
 }
 
 void MainLoop::compute2()
 {
-    TaskDescr td(saa, sd);
+    TaskDescr td(saa, sd, ref_in, ref_out);
     td.init();
 
     std::vector<std::thread> threads(sd.inputs);
 
+    // start threads to compute cross correlations in parrallel
     for (int inp = 0; inp < sd.inputs; inp++)
     {
         std::thread t(xcorrFunc, inp, td);
         threads[inp] = std::move(t);
     }
 
+    // wait for thread completion
     for (auto& th : threads) th.join();
 
+    // search for max correlation values
     for (int n = 0; n < sd.outputs; n++)
     {
         for (int inp = 0; inp < sd.inputs; inp++)
         {
+            // no results for reference input and not-reference speakers
+            if (inp == ref_in && n != ref_out) continue;
+
             float *res = saa[n][inp].data();
             int idx = findMaxAbs(res, sd.frames);
             if (debug)

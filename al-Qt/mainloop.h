@@ -16,8 +16,14 @@ typedef std::vector<Series> SeriesA;
 typedef std::vector<SeriesA> SeriesAA;
 struct TaskDescr
 {
+    TaskDescr(SeriesAA &data, SoundData &sd, int refInp, int refOut) :
+        d(data), _sd(sd), _refInp(refInp), _refOut(refOut)
+    {
+    }
+
+    // This constructor doesn't need reference channels. They can be accessed from MainLoop
     TaskDescr(SeriesAA &data, SoundData &sd) :
-        d(data), _sd(sd)
+        d(data), _sd(sd), _refInp(-1), _refOut(-1)
     {
     }
 
@@ -25,6 +31,8 @@ struct TaskDescr
 
     int _outputs;
     int _inputs;
+    int _refInp;
+    int _refOut;
     SeriesAA &d;
     SoundData &_sd;
 };
