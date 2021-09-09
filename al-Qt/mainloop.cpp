@@ -204,19 +204,30 @@ QString MainLoop::report()
     for (int inp = 0; inp < sd.inputs; inp++)
     {
 //        cout << "input:" << inp << endl;
+        if (inp == ref_in)
+        {
+            // only report reference delay
+            double d = (double)delays[ref_out][ref_in] / sampling * 330;
+            sprintf(lbl, "/mic%d", ref_in + 1);
+            sendOsc(lbl, "if", ref_out + 1, d);
+            QString r;
+            r.sprintf(" ref mic %i sp %i dist %.2lf;", ref_in + 1, ref_out + 1, d);
+            rep2 += r;
+            continue;
+        }
 
-        // report all distances
+        // report all distances for non reference inputs
         for (int n = 0; n < sd.outputs; n++)
         {
             double d = (double)delays[n][inp] / sampling * 330;
 
-            // validate the measured distance for all microphones except reference one
-            if ((inp != ref_in) && !speakers.distOk(d, n, autopan ? 0 : speakers.getCoordinates(n).z)) continue;
+            // validate the measured distance
+            if (!speakers.distOk(d, n, autopan ? 0 : speakers.getCoordinates(n).z)) continue;
 
             sprintf(lbl, "/mic%d", inp + 1);
             sendOsc(lbl, "if", n + 1, d);
             QString r;
-            r.sprintf("mic %i sp %i dist %.2lf;", inp + 1, n + 1, d);
+            r.sprintf(" mic %i sp %i dist %.2lf;", inp + 1, n + 1, d);
             rep2 += r;
         }
 
