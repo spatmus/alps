@@ -207,7 +207,7 @@ QString MainLoop::report()
         if (inp == ref_in)
         {
             // only report reference delay
-            double d = (double)delays[ref_out][ref_in] / sampling * 330;
+            double d = (double)delays[ref_out][ref_in] / sampling * SPEED_OF_SOUND;
             sprintf(lbl, "/mic%d", ref_in + 1);
             sendOsc(lbl, "if", ref_out + 1, d);
             QString r;
@@ -219,7 +219,7 @@ QString MainLoop::report()
         // report all distances for non reference inputs
         for (int n = 0; n < sd.outputs; n++)
         {
-            double d = (double)delays[n][inp] / sampling * 330;
+            double d = (double)delays[n][inp] / sampling * SPEED_OF_SOUND;
 
             // validate the measured distance
             if (!speakers.distOk(d, n, autopan ? 0 : speakers.getCoordinates(n).z)) continue;
@@ -246,8 +246,8 @@ QString MainLoop::report()
                 continue;
             }
 
-            double d1 = (double)delays[n][inp] / sampling * 330;
-            double d2 = (double)delays[m][inp] / sampling * 330;
+            double d1 = (double)delays[n][inp] / sampling * SPEED_OF_SOUND;
+            double d2 = (double)delays[m][inp] / sampling * SPEED_OF_SOUND;
             double z1 = speakers.getCoordinates(n).z;
             double z2 = speakers.getCoordinates(m).z;
 

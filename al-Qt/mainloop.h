@@ -10,6 +10,7 @@
 #define MAX_INPUTS  16
 #define QUALITY     0.0
 #define SAMPLE_RATE_ 96000
+#define SPEED_OF_SOUND  343.0
 
 typedef std::vector<float> Series;
 typedef std::vector<Series> SeriesA;
@@ -17,13 +18,13 @@ typedef std::vector<SeriesA> SeriesAA;
 struct TaskDescr
 {
     TaskDescr(SeriesAA &data, SoundData &sd, int refInp, int refOut) :
-        d(data), _sd(sd), _refInp(refInp), _refOut(refOut)
+        _refInp(refInp), _refOut(refOut), d(data), _sd(sd)
     {
     }
 
     // This constructor doesn't need reference channels. They can be accessed from MainLoop
     TaskDescr(SeriesAA &data, SoundData &sd) :
-        d(data), _sd(sd), _refInp(-1), _refOut(-1)
+        _refInp(-1), _refOut(-1), d(data), _sd(sd)
     {
     }
 
