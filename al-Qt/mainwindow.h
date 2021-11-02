@@ -82,8 +82,6 @@ private:
     double offsets[MAX_OUTPUTS] = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150};
     int pulsenumber = 5;
 
-    double maxdist = 100;
-
     int compute(); // returns reference delay in samples
     void report();
     bool distToXY(float d1, float d2, float L, float *x, float *y);

@@ -324,8 +324,9 @@ void MainWindow::loadConfiguration(const char *cfg)
             }
             else if (ss0 ==  "maxdist")
             {
-                maxdist = ss1.toDouble();
+                double maxdist = ss1.toDouble();
                 qDebug() << "maxdist " << maxdist;
+                speakers.setMaxDist(maxdist);
             }
             else if (ss0 ==  "offsets")
             {
